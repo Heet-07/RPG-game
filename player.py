@@ -1,66 +1,89 @@
 import pygame
 from settings import *
 
-class Player:
-    def __init__(self, x: float, y: float):
-        self.x = x
-        self.y = y
-        self.w = PLAYER_WIDTH
-        self.h = PLAYER_HEIGHT
-        self.vx = 0.0
-        self.vy = 0.0
-        self.on_ground = False
-        self.facing_right = True
-        self.want_jump = False
+animation_soldier={
+    "walk": pygame.image.load("Photo/Soldier/Soldier_Walk.png"),
+    "idle": pygame.image.load("Photo/Soldier/Soldier_Idle.png"),
+    "attack": pygame.image.load("Photo/Soldier/Soldier_Attack03.png"),
+    "death": pygame.image.load("Photo/Soldier/Soldier_Death.png"),
+    "hit": pygame.image.load("Photo/Soldier/Soldier_Hit.png")
+}
 
-    @property
-    def rect(self):
-        return pygame.Rect(int(self.x), int(self.y), self.w, self.h)
 
-    def handle_input(self, keys):
-        # Horizontal input
-        left = keys[pygame.K_a] or keys[pygame.K_LEFT]
-        right = keys[pygame.K_d] or keys[pygame.K_RIGHT]
-        self.vx = 0
-        if left:
-            self.vx = -PLAYER_SPEED
-            self.facing_right = False
-        if right:
-            self.vx = PLAYER_SPEED
-            self.facing_right = True
-        # Jump (pressed during this frame will be picked up in update if on ground)
-        self.want_jump = keys[pygame.K_SPACE] or keys[pygame.K_w] or keys[pygame.K_UP]
-
-    def update(self, level):
-        # Apply gravity
-        self.vy += GRAVITY
-        if self.vy > MAX_FALL_SPEED:
-            self.vy = MAX_FALL_SPEED
-
-        # Horizontal move
-        self.x += self.vx
-
-        # Vertical move
-        self.y += self.vy
-
-        # Ground collision (flat ground)
-        ground_y = level.ground_y
-        if self.y + self.h >= ground_y:
-            self.y = ground_y - self.h
-            self.vy = 0
-            self.on_ground = True
-        else:
-            self.on_ground = False
-
-        # Handle jump after ground resolution
-        if self.want_jump and self.on_ground:
-            self.vy = PLAYER_JUMP_POWER
-            self.on_ground = False
-        self.want_jump = False
-
-    def draw(self, surface, camera_x: int = 0):
-        # Simple rectangle player
-        draw_x = int(self.x - camera_x)
-        draw_y = int(self.y)
-        pygame.draw.rect(surface, BLUE, (draw_x, draw_y, self.w, self.h))
-        pygame.draw.rect(surface, WHITE, (draw_x, draw_y, self.w, self.h), 2)
+class Player(pygame.sprite.Sprite):
+    def __init__(self, x, y, health, attack_damage, speed, scale):
+        super().__init__()
+        self.animations=animation_soldier
+        self.frame_width, self.frame_height=(100, 100)
+        
+        self.state="idle"
+        self.frames=self.load_frame(self.animations[self.state])
+        self.current_frame=0
+        self.image=self.frames[self.current_frame]
+        self.mask=pygame.mask.from_surface(self.image, 0)
+        self.rect=self.image.get_rect(topleft=(x, y))
+        self.last_update=pygame.time.get_ticks()
+        self.alive=True
+        self.speed=speed
+        self.side_left=False
+        self.scales=scale
+        self.health=health
+        self.attack_damage=attack_damage
+        self.attacking = False
+        
+    def scale(self, scale):
+        self.image=pygame.transform.scale(self.image, (scale*100, scale*100))
+        
+    def load_frame(self, sprite_sheet):
+        frames=[]
+        sheet_width=sprite_sheet.get_width()
+        num_frames=sheet_width//self.frame_width
+        for i in range(num_frames):
+            frame=pygame.Surface((self.frame_width, self.frame_height), pygame.SRCALPHA)
+            frame.blit(sprite_sheet, (0, 0), (i * self.frame_width, 0, self.frame_width, self.frame_height))
+            frames.append(frame)
+        return frames
+    
+    def set_state(self,new_state):
+        if new_state != self.state and new_state in self.animations:
+            self.state = new_state
+            self.frames = self.load_frame(self.animations[self.state])
+            self.current_frame = 0
+            self.last_update = pygame.time.get_ticks()
+            
+    def update(self):
+        
+        self.image = pygame.transform.flip(self.frames[self.current_frame], self.side_left, False)
+        
+        keys = pygame.key.get_pressed()
+        if not self.attacking:
+            if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
+                self.rect.x += self.speed
+                self.side_left=False
+                self.set_state("walk")
+            elif keys[pygame.K_a] or keys[pygame.K_LEFT]:
+                self.rect.x -= self.speed
+                self.side_left=True
+                self.set_state("walk")
+            elif keys[pygame.K_SPACE]:
+                self.set_state("attack")
+                self.attacking = True
+            else:
+                self.set_state("idle")
+            
+        
+        now = pygame.time.get_ticks()
+        if now - self.last_update >=FPS:
+            self.last_update = now
+            self.current_frame += 1
+            if self.current_frame >= len(self.frames):
+                if self.state == "attack":
+                    self.attacking = False
+                    self.set_state("idle")
+                elif self.state == "death":
+                    self.current_frame = len(self.frames) - 1
+                    self.alive = False
+                else:
+                    self.current_frame = 0
+        
+        self.scale(self.scales)
