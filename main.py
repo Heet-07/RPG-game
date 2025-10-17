@@ -28,7 +28,6 @@ class Game:
         self.level = None
         self.player = None
         self.camera_x = 0
-        self.running = True
 
         self.load_level(self.level_number)
 
@@ -36,27 +35,28 @@ class Game:
         self.level_number = n
         self.level = Level(level_number=n)
         if self.player is None:
-            self.player = Player(64, self.level.ground_y - PLAYER_HEIGHT)
+            self.player = Player(64, self.level.ground_y - PLAYER_HEIGHT - 100, 100, 5, PLAYER_SPEED, 3)
         else:
             # Reset player on ground at start
             self.player.x = 64
             self.player.y = self.level.ground_y - PLAYER_HEIGHT
-            self.player.vx = 0
-            self.player.vy = 0
         self.camera_x = 0
 
     def update_camera(self):
         # Follow player with a lead
         target = self.player.x - SCREEN_WIDTH // 3
-        self.camera_x = max(0, int(target))
+        self.camera_x = max(0, int(self.player.x))
+        self.camera_x = min(self.camera_x, SCREEN_WIDTH)
 
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                self.running = False
+                pygame.quit()
+                sys.exit()
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    self.running = False
+                    pygame.quit()
+                    sys.exit()
                 if self.state == "menu":
                     if event.key == pygame.K_RETURN:
                         # Start game
@@ -84,21 +84,19 @@ class Game:
             self.menu_stars = new_stars
             return
 
-        keys = pygame.key.get_pressed()
-        self.player.handle_input(keys)
-        self.player.update(self.level)
-        self.update_camera()
-
+        self.player.update()
+        
     def draw(self):
         if self.state == "menu":
             self.draw_menu()
         else:
             self.level.draw(self.screen, self.camera_x)
-            self.player.draw(self.screen, self.camera_x)
+            self.screen.blit(self.player.image, self.player.rect)
+            
             # UI hint
             draw_text(self.screen, "A/D or Arrows to move, Space to jump, Esc to quit", self.font, WHITE, 16, 16)
             # Debug overlay
-            self.draw_debug()
+            # self.draw_debug()
         pygame.display.flip()
 
     def draw_debug(self):
@@ -128,6 +126,7 @@ class Game:
         # Starfield
         for x, y in self.menu_stars:
             surf.set_at((x, y), (255, 255, 255))
+        
         # Silhouette hills
         pygame.draw.rect(surf, (20, 35, 60), (0, ph-40, pw, 40))
         pygame.draw.rect(surf, (15, 25, 45), (0, ph-28, pw, 28))
@@ -158,13 +157,11 @@ class Game:
         self.screen.blit(scaled, (0, 0))
 
     def run(self):
-        while self.running:
+        while True:
             self.handle_events()
-            self.update()
             self.draw()
+            self.update()
             self.clock.tick(FPS)
-        pygame.quit()
-        sys.exit()
 
 if __name__ == "__main__":
     Game().run()
