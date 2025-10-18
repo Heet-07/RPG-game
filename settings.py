@@ -25,5 +25,9 @@ PLAYER_JUMP_POWER = -16
 PLAYER_WIDTH = 28
 PLAYER_HEIGHT = 48
 
+# enemy
+ENEMY_WIDTH = 28
+ENEMY_HEIGHT = 48
+ENEMY_SPEED = 3
 # Level defaults
 GROUND_HEIGHT = 80  # ground thickness in pixels
