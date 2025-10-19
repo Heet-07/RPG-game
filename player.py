@@ -112,7 +112,8 @@ class Player(pygame.sprite.Sprite):
         
         # Text
         font = pygame.font.Font(None, 16)
-        text = font.render(f"Player HP: {int(self.health)}/{int(self.max_health)}", True, WHITE)
+        text = font.render(f"Player HP: {(self.health)}/{(self.max_health)}", True, WHITE)
+        # text = font.render("HP", True, WHITE)
         screen.blit(text, (x + 10, y + 2))
             
     # update the player        
