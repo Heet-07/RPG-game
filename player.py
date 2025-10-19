@@ -67,7 +67,7 @@ class Player(pygame.sprite.Sprite):
             self.last_update = pygame.time.get_ticks()
     
 
-    '''   def get_attack_rect(self):
+    def get_attack_rect(self):
         if self.attacking:
             attack_rect = self.rect.copy()
             if self.side_left:
@@ -87,8 +87,10 @@ class Player(pygame.sprite.Sprite):
             self.last_damage_time = now
             if self.health <= 0:
                 self.health = 0
-                self.alive = False 
-    '''
+                self.alive = False
+                quit()
+                
+    
     
     # ADDED: Draw health bar on screen
     def draw_health_bar(self, screen):
@@ -102,6 +104,7 @@ class Player(pygame.sprite.Sprite):
         
         # Health (green)
         health_ratio = self.health / self.max_health
+        
         pygame.draw.rect(screen, (0, 200, 0), (x, y, bar_width * health_ratio, bar_height))
         
         # Border

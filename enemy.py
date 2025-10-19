@@ -23,14 +23,14 @@ class Enemy(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(topleft=(x, y))
 
         self.last_update = pygame.time.get_ticks()
-        self.animation_speed = 75  # ms per frame 
+        self.animation_speed = 70  # ms per frame 
 
         self.alive = True
         self.speed = speed
         self.target = target
         self.health = health
         self.attack_damage = attack_damage
-        self.attack_range = 100
+        self.attack_range = 70
         self.vision_range = 280
         self.damage_cooldown = 850
         self.last_attack_time = 0
@@ -62,7 +62,9 @@ class Enemy(pygame.sprite.Sprite):
             if self.state == "idle":
                 self.last_attack_time = pygame.time.get_ticks()
 
-    '''def take_damage(self, damage):
+
+
+    def take_damage(self, damage):
         """Reduce health when hit by player"""
         now = pygame.time.get_ticks()
         if now - self.last_damage_time > self.damage_taken_cooldown:
@@ -71,7 +73,7 @@ class Enemy(pygame.sprite.Sprite):
             if self.health <= 0:
                 self.health = 0
                 self.alive = False
-    '''
+    
 
     def draw_health_bar(self, screen, camera_x):
         """Draw small health bar above enemy"""
@@ -84,7 +86,6 @@ class Enemy(pygame.sprite.Sprite):
         # Position above enemy
         x = self.rect.centerx-20
         y = self.rect.centery-33
-        print(self.rect.centery)
         
         # Only draw if on screen
         if -bar_width < x < 1024 + bar_width:
@@ -126,13 +127,23 @@ class Enemy(pygame.sprite.Sprite):
             # Apply flipping
             self.image = pygame.transform.flip(self.frames[self.current_frame], self.side_left, False)
 
+        # --- APPLY DAMAGE DURING ATTACK ---
+        if self.attacking:
+            if self.rect.colliderect(self.target):
+                self.target.take_damage(ENEMY_ATTACK_DAMAGE)
+                   
+            
+
+        
+
         # --- ATTACK LOGIC ---
         if self.attacking:
             # Stay in attack animation for 800ms
-            if now - self.last_attack_time > 850:
+            if now - self.last_attack_time > 800:
                 self.attacking = False
                 self.set_state("idle")
             return  # don’t move during attack
+
 
         # --- DETECT PLAYER ---
         if distance < self.attack_range:
@@ -141,9 +152,8 @@ class Enemy(pygame.sprite.Sprite):
                 self.set_state("attack")
                 self.attacking = True
                 self.last_attack_time = now
-                # Optional: apply damage after 300ms
-                # if now - self.last_attack_time > 300:
-                #     self.target.health -= self.attack_damage
+                
+                  
             else:
                 self.set_state("idle")
         elif distance < self.vision_range:

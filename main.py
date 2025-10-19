@@ -31,6 +31,9 @@ class Game:
         self.enemy = None
         self.camera_x = 0
 
+        # self.last_damage_time = 0
+        # self.damage_taken_cooldown = 300  
+
         self.load_level(self.level_number)
 
     def load_level(self, n: int):
@@ -46,7 +49,7 @@ class Game:
             self.enemy.x = 800
             self.enemy.y = self.level.ground_y - ENEMY_HEIGHT
         self.camera_x = 0
-        
+
         self.player.draw_health_bar(self.screen)
         self.enemy.draw_health_bar(self.screen, self.camera_x)
 
