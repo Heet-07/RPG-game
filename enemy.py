@@ -23,7 +23,7 @@ class Enemy(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(topleft=(x, y))
 
         self.last_update = pygame.time.get_ticks()
-        self.animation_speed = 70  # ms per frame 
+        self.animation_speed = 150  # ms per frame 
 
         self.alive = True
         self.speed = speed
@@ -128,9 +128,10 @@ class Enemy(pygame.sprite.Sprite):
             self.image = pygame.transform.flip(self.frames[self.current_frame], self.side_left, False)
 
         # --- APPLY DAMAGE DURING ATTACK ---
-        if self.attacking:
-            if self.rect.colliderect(self.target):
-                self.target.take_damage(ENEMY_ATTACK_DAMAGE)
+        # if self.attacking and distance<self.attack_range:
+        #     if self.rect.colliderect(self.target) :
+        #         self.target.take_damage(ENEMY_ATTACK_DAMAGE)
+        #         now = pygame.time.get_ticks()
                    
             
 
@@ -139,9 +140,15 @@ class Enemy(pygame.sprite.Sprite):
         # --- ATTACK LOGIC ---
         if self.attacking:
             # Stay in attack animation for 800ms
-            if now - self.last_attack_time > 800:
+            if now - self.last_attack_time > 1000:
                 self.attacking = False
+                self.last_attack_time=now
                 self.set_state("idle")
+            else :
+                if self.rect.colliderect(self.target.rect):
+                    attack_hit_delay = 500
+                    if now-self.last_attack_time>attack_hit_delay and distance<self.attack_range+5:
+                        self.target.take_damage(self.attack_damage)
             return  # don’t move during attack
 
 
@@ -151,9 +158,7 @@ class Enemy(pygame.sprite.Sprite):
                 print("Enemy attacking!")
                 self.set_state("attack")
                 self.attacking = True
-                self.last_attack_time = now
-                
-                  
+                self.last_attack_time = now       
             else:
                 self.set_state("idle")
         elif distance < self.vision_range:

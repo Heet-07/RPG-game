@@ -40,7 +40,7 @@ class Player(pygame.sprite.Sprite):
         # ADDED: Attack hitbox variables
         self.attack_rect = None
         self.last_damage_time = 0
-        self.damage_cooldown = 500  # ms between damage to same enemy
+        self.damage_cooldown = 800  # ms between damage to same enemy
     
     # magnify size of player    
     def scale(self, scale):
