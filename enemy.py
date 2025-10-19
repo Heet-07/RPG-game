@@ -23,7 +23,7 @@ class Enemy(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(topleft=(x, y))
 
         self.last_update = pygame.time.get_ticks()
-        self.animation_speed = 150  # ms per frame 
+        self.animation_speed = 60  # ms per frame 
 
         self.alive = True
         self.speed = speed
@@ -32,7 +32,7 @@ class Enemy(pygame.sprite.Sprite):
         self.attack_damage = attack_damage
         self.attack_range = 70
         self.vision_range = 280
-        self.damage_cooldown = 850
+        self.damage_cooldown = 500
         self.last_attack_time = 0
         self.attacking = False
         self.side_left = True
@@ -139,14 +139,14 @@ class Enemy(pygame.sprite.Sprite):
 
         # --- ATTACK LOGIC ---
         if self.attacking:
-            # Stay in attack animation for 800ms
-            if now - self.last_attack_time > 1000:
+            # Stay in attack animation for 800ms           
+            if now - self.last_attack_time > 450:
                 self.attacking = False
                 self.last_attack_time=now
                 self.set_state("idle")
             else :
                 if self.rect.colliderect(self.target.rect):
-                    attack_hit_delay = 500
+                    attack_hit_delay = 200
                     if now-self.last_attack_time>attack_hit_delay and distance<self.attack_range+5:
                         self.target.take_damage(self.attack_damage)
             return  # don’t move during attack
