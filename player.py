@@ -30,9 +30,17 @@ class Player(pygame.sprite.Sprite):
         self.speed=speed
         self.side_left=False
         self.scales=scale
+        
+        # ADDED: Health tracking variables
+        self.max_health=health
         self.health=health
         self.attack_damage=attack_damage
         self.attacking = False
+        
+        # ADDED: Attack hitbox variables
+        self.attack_rect = None
+        self.last_damage_time = 0
+        self.damage_cooldown = 500  # ms between damage to same enemy
     
     # magnify size of player    
     def scale(self, scale):
@@ -57,6 +65,52 @@ class Player(pygame.sprite.Sprite):
             self.frames = self.load_frame(self.animations[self.state], self.scales)
             self.current_frame = 0
             self.last_update = pygame.time.get_ticks()
+    
+
+    '''   def get_attack_rect(self):
+        if self.attacking:
+            attack_rect = self.rect.copy()
+            if self.side_left:
+                attack_rect.right = self.rect.left 
+            else:
+                attack_rect.left = self.rect.right
+            return attack_rect
+            attack_rect.width = 100
+        return None    
+
+
+    # ADDED: Take damage from enemy
+    def take_damage(self, damage):
+        now = pygame.time.get_ticks()
+        if now - self.last_damage_time > self.damage_cooldown:
+            self.health -= damage
+            self.last_damage_time = now
+            if self.health <= 0:
+                self.health = 0
+                self.alive = False 
+    '''
+    
+    # ADDED: Draw health bar on screen
+    def draw_health_bar(self, screen):
+        bar_width = 200
+        bar_height = 20
+        x = 20
+        y = 50
+        
+        # Background (dark red)
+        pygame.draw.rect(screen, (100, 0, 0), (x, y, bar_width, bar_height))
+        
+        # Health (green)
+        health_ratio = self.health / self.max_health
+        pygame.draw.rect(screen, (0, 200, 0), (x, y, bar_width * health_ratio, bar_height))
+        
+        # Border
+        pygame.draw.rect(screen, WHITE, (x, y, bar_width, bar_height), 2)
+        
+        # Text
+        font = pygame.font.Font(None, 16)
+        text = font.render(f"Player HP: {int(self.health)}/{int(self.max_health)}", True, WHITE)
+        screen.blit(text, (x + 10, y + 2))
             
     # update the player        
     def update(self):
@@ -96,4 +150,3 @@ class Player(pygame.sprite.Sprite):
                     self.alive = False
                 else:
                     self.current_frame = 0
-                

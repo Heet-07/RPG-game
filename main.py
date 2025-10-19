@@ -37,8 +37,8 @@ class Game:
         self.level_number = n
         self.level = Level(level_number=n)
         if (self.player is None) and (self.enemy is None):
-            self.player = Player(64, self.level.ground_y - PLAYER_HEIGHT - 100, 100, 5, PLAYER_SPEED, 3)
-            self.enemy = Enemy(800, self.level.ground_y - ENEMY_HEIGHT - 100, 100, 3, ENEMY_SPEED, 3, self.player)
+            self.player = Player(64, self.level.ground_y - PLAYER_HEIGHT - 100, PLAYER_HEALTH, PLAYER_ATTACK_DAMAGE, PLAYER_SPEED, 3)
+            self.enemy = Enemy(800, self.level.ground_y - ENEMY_HEIGHT - 100, ENEMY_HEALTH, ENEMY_ATTACK_DAMAGE, ENEMY_SPEED, 3, self.player)
         else:
             # Reset player on ground at start
             self.player.x = 64
@@ -46,6 +46,10 @@ class Game:
             self.enemy.x = 800
             self.enemy.y = self.level.ground_y - ENEMY_HEIGHT
         self.camera_x = 0
+        
+        self.player.draw_health_bar(self.screen)
+        self.enemy.draw_health_bar(self.screen, self.camera_x)
+
 
     def update_camera(self):
         # Follow player with a lead
@@ -101,6 +105,10 @@ class Game:
             self.screen.blit(self.player.image, self.player.rect)
             self.screen.blit(self.enemy.image, self.enemy.rect)
             
+            # Draw health bar **after everything else**
+            self.player.draw_health_bar(self.screen)
+            self.enemy.draw_health_bar(self.screen, self.camera_x)
+
             # UI hint
             draw_text(self.screen, "A/D or Arrows to move, Space to attack, Esc to quit", self.font, WHITE, 16, 16)
             # Debug overlay

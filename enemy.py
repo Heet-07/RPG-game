@@ -37,6 +37,9 @@ class Enemy(pygame.sprite.Sprite):
         self.attacking = False
         self.side_left = True
 
+        self.max_health = health
+        self.health = health
+
     # Pre-scale frames when loading to improve performance
     def load_frames(self, sprite_sheet):
         frames = []
@@ -58,6 +61,43 @@ class Enemy(pygame.sprite.Sprite):
             self.last_update = pygame.time.get_ticks()
             if self.state == "idle":
                 self.last_attack_time = pygame.time.get_ticks()
+
+    '''def take_damage(self, damage):
+        """Reduce health when hit by player"""
+        now = pygame.time.get_ticks()
+        if now - self.last_damage_time > self.damage_taken_cooldown:
+            self.health -= damage
+            self.last_damage_time = now
+            if self.health <= 0:
+                self.health = 0
+                self.alive = False
+    '''
+
+    def draw_health_bar(self, screen, camera_x):
+        """Draw small health bar above enemy"""
+        if not self.alive:
+            return
+        
+        bar_width = 40
+        bar_height = 5
+        
+        # Position above enemy
+        x = self.rect.centerx-20
+        y = self.rect.centery-33
+        print(self.rect.centery)
+        
+        # Only draw if on screen
+        if -bar_width < x < 1024 + bar_width:
+            # Background (dark red)
+            pygame.draw.rect(screen, (100, 0, 0), (x, y, bar_width, bar_height))
+            
+            # Health (green)
+            health_ratio = max(0, self.health / self.max_health)
+            pygame.draw.rect(screen, (0, 200, 0), (x, y, bar_width * health_ratio, bar_height))
+            
+            # Border
+            pygame.draw.rect(screen, WHITE, (x, y, bar_width, bar_height), 1)
+
 
     def update(self):
         now = pygame.time.get_ticks()
