@@ -31,8 +31,8 @@ class Game:
         self.enemy = None
         self.camera_x = 0
 
-        # self.last_damage_time = 0
-        # self.damage_taken_cooldown = 300  
+        self.lastDamage = 0
+        self.damageCooldown = 500  
 
         self.load_level(self.level_number)
 
@@ -103,14 +103,17 @@ class Game:
     def draw(self):
         if self.state == "menu":
             self.draw_menu()
-        else:
+        else: 
             self.level.draw(self.screen, self.camera_x)
             self.screen.blit(self.player.image, self.player.rect)
             self.screen.blit(self.enemy.image, self.enemy.rect)
             
             # Draw health bar **after everything else**
             self.player.draw_health_bar(self.screen)
-            self.enemy.draw_health_bar(self.screen, self.camera_x)
+            if self.enemy.alive:
+                self.enemy.draw_health_bar(self.screen, self.camera_x)
+            else:
+                self.enemy.kill()
 
             # UI hint
             draw_text(self.screen, "A/D or Arrows to move, Space to attack, Esc to quit", self.font, WHITE, 16, 16)
@@ -175,11 +178,21 @@ class Game:
         scaled = pygame.transform.scale(surf, (SCREEN_WIDTH, SCREEN_HEIGHT))
         self.screen.blit(scaled, (0, 0))
 
+    def player_attack(self):
+        if self.player.attacking:
+            attack_block = self.player.get_attack_rect()
+            now = pygame.time.get_ticks()
+            if attack_block is not None and now-self.lastDamage > self.damageCooldown:
+                if attack_block.colliderect(self.enemy):
+                    self.lastDamage = now
+                    self.enemy.take_damage(PLAYER_ATTACK_DAMAGE)
+
     def run(self):
         while True:
             self.handle_events()
             self.draw()
             self.update()
+            self.player_attack()
             self.clock.tick(FPS)
 
 if __name__ == "__main__":

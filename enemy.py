@@ -40,6 +40,11 @@ class Enemy(pygame.sprite.Sprite):
         self.max_health = health
         self.health = health
 
+        self.deathTime = 0
+        self.deathDelay = 800
+        # self.last_damage_time=0
+        # self.damage_taken_cooldown=0
+
     # Pre-scale frames when loading to improve performance
     def load_frames(self, sprite_sheet):
         frames = []
@@ -67,12 +72,12 @@ class Enemy(pygame.sprite.Sprite):
     def take_damage(self, damage):
         """Reduce health when hit by player"""
         now = pygame.time.get_ticks()
-        if now - self.last_damage_time > self.damage_taken_cooldown:
-            self.health -= damage
-            self.last_damage_time = now
-            if self.health <= 0:
-                self.health = 0
-                self.alive = False
+        # if now - self.last_damage_time > self.damage_taken_cooldown:
+        self.health -= damage
+        self.last_damage_time = now
+        if self.health <= 0:
+            self.health = 0
+            self.alive = False
     
 
     def draw_health_bar(self, screen, camera_x):
@@ -109,9 +114,7 @@ class Enemy(pygame.sprite.Sprite):
         # Flip sprite based on direction
         self.side_left = dx < 0
 
-        # Death check
-        if not self.alive:
-            self.set_state("death")
+
 
         # --- ANIMATION UPDATE FIRST ---
         if now - self.last_update >= self.animation_speed:
@@ -123,15 +126,29 @@ class Enemy(pygame.sprite.Sprite):
                     self.alive = False
                 else:
                     self.current_frame = 0
-
             # Apply flipping
             self.image = pygame.transform.flip(self.frames[self.current_frame], self.side_left, False)
+                    
 
-        # --- APPLY DAMAGE DURING ATTACK ---
-        # if self.attacking and distance<self.attack_range:
-        #     if self.rect.colliderect(self.target) :
-        #         self.target.take_damage(ENEMY_ATTACK_DAMAGE)
-        #         now = pygame.time.get_ticks()
+
+        # Death check
+# --- DEATH CHECK ---
+        if not self.alive:
+            if self.state != "death":
+                self.set_state("death")
+                self.deathTime = now
+            else:
+                # Fade out before killing
+                if now - self.deathTime > self.deathDelay - 300:
+                    alpha = max(0, 255 - int((now - self.deathTime - (self.deathDelay - 300)) * 255 / 300))
+                    self.image.set_alpha(alpha)
+                if now - self.deathTime > self.deathDelay:
+                    self.kill()
+            return
+
+
+
+
                    
             
 

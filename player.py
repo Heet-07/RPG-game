@@ -138,7 +138,8 @@ class Player(pygame.sprite.Sprite):
                 self.attacking = True
             else:
                 self.set_state("idle")
-            
+                
+
         
         # setting the player state
         now = pygame.time.get_ticks()
