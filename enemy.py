@@ -45,6 +45,10 @@ class Enemy(pygame.sprite.Sprite):
         # self.last_damage_time=0
         # self.damage_taken_cooldown=0
 
+        # Load sounds
+        self.death_sound = pygame.mixer.Sound("Audio/orc_death.MP3")  # put your sound file path here
+        self.death_sound.set_volume(0.6)  # optional: control volume (0.0 - 1.0)
+
     # Pre-scale frames when loading to improve performance
     def load_frames(self, sprite_sheet):
         frames = []
@@ -135,8 +139,10 @@ class Enemy(pygame.sprite.Sprite):
 # --- DEATH CHECK ---
         if not self.alive:
             if self.state != "death":
+                self.death_sound.play()
                 self.set_state("death")
                 self.deathTime = now
+
             else:
                 # Fade out before killing
                 if now - self.deathTime > self.deathDelay - 300:

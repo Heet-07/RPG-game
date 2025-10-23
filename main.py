@@ -10,6 +10,8 @@ from enemy import Enemy
 class Game:
     def __init__(self):
         pygame.init()
+        pygame.mixer.init()
+
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         pygame.display.set_caption(TITLE)
         self.clock = pygame.time.Clock()
@@ -35,6 +37,9 @@ class Game:
         self.damageCooldown = 500  
 
         self.load_level(self.level_number)
+
+
+
 
     def load_level(self, n: int):
         self.level_number = n

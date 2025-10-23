@@ -41,6 +41,11 @@ class Player(pygame.sprite.Sprite):
         self.attack_rect = None
         self.last_damage_time = 0
         self.damage_cooldown = 800  # ms between damage to same enemy
+
+
+        # Load sounds
+        self.hit = pygame.mixer.Sound("Audio/player_hit1.mp3")  
+        self.hit.set_volume(0.3)
     
     # magnify size of player    
     def scale(self, scale):
@@ -74,6 +79,7 @@ class Player(pygame.sprite.Sprite):
                 attack_rect.right = self.rect.left 
             else:
                 attack_rect.left = self.rect.right
+                
             return attack_rect
             attack_rect.width = 100
         return None    
@@ -135,6 +141,7 @@ class Player(pygame.sprite.Sprite):
                 self.set_state("walk")
             elif keys[pygame.K_SPACE]:
                 self.set_state("attack")
+                self.hit.play()
                 self.attacking = True
             else:
                 self.set_state("idle")
