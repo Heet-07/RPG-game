@@ -2,7 +2,7 @@
 
 # Screen
 SCREEN_WIDTH = 1024
-SCREEN_HEIGHT = 768
+SCREEN_HEIGHT = 800
 FPS = 60
 TITLE = "Dungeon Platformer (Fresh Start)"
 
