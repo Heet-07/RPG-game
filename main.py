@@ -8,10 +8,12 @@ from player import Player
 from enemy import Enemy
 
 class Game:
+
     def __init__(self):
         pygame.init()
         pygame.mixer.init()
 
+        print("🟢 Initializing Game...")
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         pygame.display.set_caption(TITLE)
         self.clock = pygame.time.Clock()
@@ -20,13 +22,15 @@ class Game:
         # Menu state and pixel look
         self.state = "menu"  # menu | playing
         self.menu_tick = 0
-        self.pixel_size = (256, 192)  # base pixel surface (4x scale -> 1024x768)
+        self.pixel_size = (256, 192)
         self.pixel_font_small = pygame.font.Font(None, 16)
         self.pixel_font_large = pygame.font.Font(None, 24)
-        # Simple starfield for the menu
-        self.menu_stars = [(random.randrange(self.pixel_size[0]), random.randrange(self.pixel_size[1]//2)) for _ in range(60)]
+        self.menu_stars = [
+            (random.randrange(self.pixel_size[0]), random.randrange(self.pixel_size[1] // 2))
+            for _ in range(60)
+        ]
 
-        # World / Level state
+        # --- define world/level state BEFORE load_level() ---
         self.level_number = 1
         self.level = None
         self.player = None
@@ -36,9 +40,10 @@ class Game:
         self.lastDamage = 0
         self.damageCooldown = 500  
 
+        # --- now it's safe to load level ---
+        print("🟢 Loading first level...")
         self.load_level(self.level_number)
-
-
+        print("✅ Level loaded successfully")
 
 
     def load_level(self, n: int):
@@ -60,10 +65,11 @@ class Game:
 
 
     def update_camera(self):
-        # Follow player with a lead
-        target = self.player.x - SCREEN_WIDTH // 3
-        self.camera_x = max(0, int(self.player.x))
-        self.camera_x = min(self.camera_x, SCREEN_WIDTH)
+        """Follow player horizontally with smooth offset."""
+        player_center_x = self.player.rect.centerx
+        target = player_center_x - SCREEN_WIDTH // 2
+        self.camera_x = max(0, min(target, WORLD_WIDTH - SCREEN_WIDTH))
+
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -84,6 +90,9 @@ class Game:
                         self.load_level(1)
                     elif event.key == pygame.K_2:
                         self.load_level(2)
+                    elif event.key == pygame.K_3:
+                        self.load_level(3)
+
 
     def update(self):
         if self.state == "menu":
@@ -110,8 +119,8 @@ class Game:
             self.draw_menu()
         else: 
             self.level.draw(self.screen, self.camera_x)
-            self.screen.blit(self.player.image, self.player.rect)
-            self.screen.blit(self.enemy.image, self.enemy.rect)
+            self.screen.blit(self.player.image, (self.player.rect.x - self.camera_x, self.player.rect.y))
+            self.screen.blit(self.enemy.image, (self.enemy.rect.x - self.camera_x, self.enemy.rect.y))
             
             # Draw health bar **after everything else**
             self.player.draw_health_bar(self.screen)
@@ -193,7 +202,10 @@ class Game:
                     self.enemy.take_damage(PLAYER_ATTACK_DAMAGE)
 
     def run(self):
+        print("🟢 Entering run loop")
         while True:
+            # you can keep this commented after debugging to avoid spam
+            # print("loop")
             self.handle_events()
             self.draw()
             self.update()
@@ -202,3 +214,5 @@ class Game:
 
 if __name__ == "__main__":
     Game().run()
+
+
