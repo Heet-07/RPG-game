@@ -73,16 +73,10 @@ class Enemy(pygame.sprite.Sprite):
     def take_damage(self, damage):
         """Reduce health when hit by player"""
         now = pygame.time.get_ticks()
-<<<<<<< HEAD
-        if now - self.last_damage_time > self.damage_taken_cooldown:
-            self.health -= damage
-            self.last_damage_time = now
-=======
         # if now - self.last_damage_time > self.damage_taken_cooldown:
         self.set_state("hit")
         self.health -= damage
         self.last_damage_time = now
->>>>>>> 730b020d6bc34081a9678aa8993a03a46ac621b9
         if self.health <= 0:
             self.health = 0
             self.alive = False
@@ -183,66 +177,3 @@ class Enemy(pygame.sprite.Sprite):
                     self.attacking = False
                 else:
                     self.current_frame = 0
-<<<<<<< HEAD
-            # Apply flipping
-            self.image = pygame.transform.flip(self.frames[self.current_frame], self.side_left, False)
-                    
-
-
-        # Death check
-# --- DEATH CHECK ---
-        if not self.alive:
-            if self.state != "death":
-                self.set_state("death")
-                self.deathTime = now
-
-            else:
-                # Fade out before killing
-                if now - self.deathTime > self.deathDelay - 300:
-                    alpha = max(0, 255 - int((now - self.deathTime - (self.deathDelay - 300)) * 255 / 300))
-                    self.image.set_alpha(alpha)
-                if now - self.deathTime > self.deathDelay:
-
-                    self.kill()
-            return
-
-
-
-
-                   
-            
-
-        
-
-        # --- ATTACK LOGIC ---
-        if self.attacking:
-            # Stay in attack animation for 800ms           
-            if now - self.last_attack_time > 450:
-                self.attacking = False
-                self.last_attack_time=now
-                self.set_state("idle")
-            else :
-                if self.rect.colliderect(self.target.rect):
-                    attack_hit_delay = 200
-                    if now-self.last_attack_time>attack_hit_delay and distance<self.attack_range+5:
-                        self.target.take_damage(self.attack_damage)
-            return  # don’t move during attack
-
-
-        # --- DETECT PLAYER ---
-        if distance < self.attack_range:
-            if now - self.last_attack_time > self.damage_cooldown:
-                print("Enemy attacking!")
-                self.set_state("attack")
-                self.attacking = True
-                self.last_attack_time = now       
-            else:
-                self.set_state("idle")
-        elif distance < self.vision_range:
-            self.set_state("walk")
-            if distance != 0:
-                self.rect.x += int(self.speed * dx / distance)
-        else:
-            self.set_state("idle")
-=======
->>>>>>> 730b020d6bc34081a9678aa8993a03a46ac621b9
