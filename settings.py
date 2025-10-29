@@ -2,7 +2,7 @@
 
 # Screen
 SCREEN_WIDTH = 1024
-SCREEN_HEIGHT = 768
+SCREEN_HEIGHT = 800
 FPS = 60
 TITLE = "Dungeon Platformer (Fresh Start)"
 
@@ -34,3 +34,4 @@ ENEMY_ATTACK_DAMAGE = 0.5
 ENEMY_HEALTH = 5
 # Level defaults
 GROUND_HEIGHT = 80  # ground thickness in pixels
+WORLD_WIDTH = 3000  # pixels wide, you can increase later

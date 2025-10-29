@@ -2,110 +2,106 @@ import os
 import pygame
 from settings import *
 
+
 class Level:
-    """Minimal level with a single background image and a flat ground."""
+    """Level with two parallax layers (rear + mid) and platforms."""
     def __init__(self, level_number: int = 1):
+        from game_platform import Platform
         self.number = level_number
-        self.bg_image = None
-        self.scroll_factor = 0.2  # subtle parallax for background
         self.ground_y = SCREEN_HEIGHT - GROUND_HEIGHT
 
-        self._load_background()
+        # Platforms
+        self.platforms = pygame.sprite.Group()
+        self.layouts = {
+            1: [
+                (200, 600, 200, 20),
+                (500, 450, 200, 20),
+                (800, 300, 150, 20),
+                (1200, 550, 220, 20),
+            ],
+            2: [
+                (100, 500, 200, 20),
+                (400, 400, 200, 20),
+                (900, 300, 250, 20),
+                (1500, 500, 180, 20),
+                (1900, 350, 150, 20),
+            ],
+            3: [
+                (150, 550, 200, 20),
+                (600, 450, 220, 20),
+                (1000, 350, 200, 20),
+                (1700, 600, 150, 20),
+            ],
+        }
+        for p in self.layouts.get(self.number, []):
+            self.platforms.add(Platform(*p))
 
-    def _load_background(self):
-        """Load a single full background for the level, if present.
-        Priority (first found is used):
-        1) assets/level{n}.jpg (and level_{n}.jpg/.png)
-        2) assets/backgrounds/level_{n}.*
-        3) pack: assets/Free Pixel Art Forest/PNG/Background layers/level_{n}.* (or full.png)
-        4) assets/background.png/bg.png then any other image in assets
-        If none found, bg_image stays None and we use a sky fill.
-        """
-        base = os.path.dirname(__file__)
-        assets_dir = os.path.join(base, "assets")
+        self.layers = []
+        self._load_background_layers()
 
-        def add(paths, bucket):
-            for p in paths:
-                bucket.append(p)
+    # ----------------------------------------------------------------------
+    def _load_background_layers(self):
+        """Load level-specific parallax backgrounds (rear & mid)."""
+        bg_dir = os.path.join(os.getcwd(), "assets", "backgrounds")
+        print(f"📁 Background folder: {bg_dir}")
 
-        # 1) Assets root, explicit level file names (jpg preference as requested)
-        candidates: list[str] = []
-        add([
-            os.path.join(assets_dir, f"level{self.number}.jpg"),
-            os.path.join(assets_dir, f"level_{self.number}.jpg"),
-            os.path.join(assets_dir, f"level{self.number}.png"),
-            os.path.join(assets_dir, f"level_{self.number}.png"),
-        ], candidates)
 
-        # 2) assets/backgrounds/level_*.{png,jpg}
-        add([
-            os.path.join(base, "assets", "backgrounds", f"level_{self.number}.jpg"),
-            os.path.join(base, "assets", "backgrounds", f"level{self.number}.jpg"),
-            os.path.join(base, "assets", "backgrounds", f"level_{self.number}.png"),
-            os.path.join(base, "assets", "backgrounds", f"level{self.number}.png"),
-        ], candidates)
 
-        # 3) Pack directory
-        pack_dir = os.path.join(base, "assets", "Free Pixel Art Forest", "PNG", "Background layers")
-        add([
-            os.path.join(pack_dir, f"level_{self.number}.png"),
-            os.path.join(pack_dir, f"level{self.number}.png"),
-            os.path.join(pack_dir, "full.png"),
-        ], candidates)
+        # Expected filenames (use your exact files)
+        layer_files = [
+            (f"level{self.number}rear.png", 0.3),  # rear = far = slower
+            (f"level{self.number}mid.png", 0.6),   # mid = closer = faster
+        ]
 
-        # 4) Preferred generic names then any image in assets root
-        add([os.path.join(assets_dir, n) for n in ("background.jpg", "bg.jpg", "background.png", "bg.png")], candidates)
-        try:
-            if os.path.isdir(assets_dir):
-                for name in sorted(os.listdir(assets_dir)):
-                    lower = name.lower()
-                    if lower.endswith((".png", ".jpg", ".jpeg")):
-                        candidates.append(os.path.join(assets_dir, name))
-        except Exception:
-            pass
-
-        for path in candidates:
+        for name, speed in layer_files:
+            path = os.path.join(bg_dir, name)
             if os.path.isfile(path):
                 try:
-                    lower = path.lower()
-                    # Use convert() for JPEG (no alpha), convert_alpha() for PNG
-                    if lower.endswith((".jpg", ".jpeg")):
-                        img = pygame.image.load(path).convert()
-                    else:
-                        img = pygame.image.load(path).convert_alpha()
-                    ih, iw = img.get_height(), img.get_width()
-                    if ih > 0:
-                        scale = SCREEN_HEIGHT / ih
-                        img = pygame.transform.smoothscale(img, (int(iw * scale), SCREEN_HEIGHT))
-                    self.bg_image = img
-                    return
-                except Exception:
-                    continue
+                    img = pygame.image.load(path).convert_alpha()
+                    scale = SCREEN_HEIGHT / img.get_height()
+                    img = pygame.transform.smoothscale(
+                        img, (int(img.get_width() * scale), SCREEN_HEIGHT)
+                    )
+                    self.layers.append((img, speed))
+                except Exception as e:
+                    print(f"Failed to load {name}:", e)
 
+        # Fallback (if missing files)
+        if not self.layers:
+            surf = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
+            surf.fill(SKY_BLUE)
+            self.layers.append((surf, 0.2))
+
+    # ----------------------------------------------------------------------
     def draw_background(self, surface, camera_x: int = 0):
-        if self.bg_image is None:
-            surface.fill(SKY_BLUE)
-            return
-        img = self.bg_image
-        w = img.get_width()
-        # Scroll based on factor, then tile horizontally
-        x = -int(camera_x * self.scroll_factor) % w
-        surface.blit(img, (x - w, 0))
-        surface.blit(img, (x, 0))
+        """Draw parallax background layers."""
+        for img, speed in self.layers:
+            w = img.get_width()
+            x = -int(camera_x * speed) % w
+            surface.blit(img, (x - w, 0))
+            surface.blit(img, (x, 0))
 
     def draw_ground(self, surface, camera_x: int = 0):
-        # Simple flat ground strip
+        """Draw simple flat ground."""
         ground_color = (40, 60, 90)
-        pygame.draw.rect(surface, ground_color, (0, self.ground_y, SCREEN_WIDTH, GROUND_HEIGHT))
-        
-        # Debug ground markers to show horizontal motion relative to camera
+        pygame.draw.rect(surface, (40, 60, 90), (0 - camera_x, self.ground_y, WORLD_WIDTH, GROUND_HEIGHT))
+
         tick_color = (90, 120, 160)
         spacing = 64
         offset = (-int(camera_x)) % spacing
-        top = self.ground_y
         for x in range(offset, SCREEN_WIDTH + spacing, spacing):
-            pygame.draw.line(surface, tick_color, (x, top), (x, top + 12), 2)
+            pygame.draw.line(surface, tick_color, (x, self.ground_y), (x, self.ground_y + 12), 2)
+
+    def draw_platforms(self, surface, camera_x: int = 0):
+        """Draw all platforms relative to camera, only if visible."""
+        for p in self.platforms:
+            screen_x = p.rect.x - camera_x
+            if -200 < screen_x < SCREEN_WIDTH + 200:  # simple cull
+                surface.blit(p.image, (screen_x, p.rect.y))
+
 
     def draw(self, surface, camera_x: int = 0):
+        """Render order: background → ground → platforms."""
         self.draw_background(surface, camera_x)
         self.draw_ground(surface, camera_x)
+        self.draw_platforms(surface, camera_x)

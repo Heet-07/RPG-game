@@ -102,16 +102,16 @@ class Enemy(pygame.sprite.Sprite):
         y = self.rect.centery-33
         
         # Only draw if on screen
-        if -bar_width < x < 1024 + bar_width:
+        # if -bar_width < x < 1024 + bar_width:
             # Background (dark red)
-            pygame.draw.rect(screen, (100, 0, 0), (x, y, bar_width, bar_height))
+        pygame.draw.rect(screen, (100, 0, 0), (x, y, bar_width, bar_height))
             
             # Health (green)
-            health_ratio = max(0, self.health / self.max_health)
-            pygame.draw.rect(screen, (0, 200, 0), (x, y, bar_width * health_ratio, bar_height))
+        health_ratio = max(0, self.health / self.max_health)
+        pygame.draw.rect(screen, (0, 200, 0), (x, y, bar_width * health_ratio, bar_height))
             
             # Border
-            pygame.draw.rect(screen, WHITE, (x, y, bar_width, bar_height), 1)
+        pygame.draw.rect(screen, WHITE, (x, y, bar_width, bar_height), 1)
 
 
     def update(self):
