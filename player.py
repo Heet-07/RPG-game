@@ -74,14 +74,14 @@ class Player(pygame.sprite.Sprite):
 
     def get_attack_rect(self):
         if self.attacking:
-            attack_rect = self.rect.copy()
-            if self.side_left:
-                attack_rect.right = self.rect.left 
-            else:
-                attack_rect.left = self.rect.right
+            attack_rect = pygame.Rect(self.rect.x, self.rect.y, 100, 28)
+            # attack_rect.width = 2
+            # if self.side_left:
+            #     attack_rect.right = self.rect.left 
+            # else:
+            #     attack_rect.left = self.rect.right
                 
             return attack_rect
-            attack_rect.width = 100
         return None    
 
 

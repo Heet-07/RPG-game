@@ -42,8 +42,9 @@ class Enemy(pygame.sprite.Sprite):
 
         self.deathTime = 0
         self.deathDelay = 800
-        # self.last_damage_time=0
-        # self.damage_taken_cooldown=0
+
+        self.last_damage_time=0
+        self.damage_taken_cooldown=500
 
         # Load sounds
         self.death_sound = pygame.mixer.Sound("Audio/orc_death.MP3")  # put your sound file path here
@@ -76,12 +77,16 @@ class Enemy(pygame.sprite.Sprite):
     def take_damage(self, damage):
         """Reduce health when hit by player"""
         now = pygame.time.get_ticks()
-        # if now - self.last_damage_time > self.damage_taken_cooldown:
-        self.health -= damage
-        self.last_damage_time = now
+        if now - self.last_damage_time > self.damage_taken_cooldown:
+            self.health -= damage
+            self.last_damage_time = now
         if self.health <= 0:
             self.health = 0
             self.alive = False
+        if 0 < self.health < 2:
+            self.death_sound.play()
+
+
     
 
     def draw_health_bar(self, screen, camera_x):
@@ -114,7 +119,7 @@ class Enemy(pygame.sprite.Sprite):
         dx = self.target.rect.centerx - self.rect.centerx
         dy = self.target.rect.centery - self.rect.centery
         distance = (dx**2 + dy**2)**0.5
-
+        print(distance)
         # Flip sprite based on direction
         self.side_left = dx < 0
 
@@ -139,7 +144,6 @@ class Enemy(pygame.sprite.Sprite):
 # --- DEATH CHECK ---
         if not self.alive:
             if self.state != "death":
-                self.death_sound.play()
                 self.set_state("death")
                 self.deathTime = now
 
@@ -149,6 +153,7 @@ class Enemy(pygame.sprite.Sprite):
                     alpha = max(0, 255 - int((now - self.deathTime - (self.deathDelay - 300)) * 255 / 300))
                     self.image.set_alpha(alpha)
                 if now - self.deathTime > self.deathDelay:
+
                     self.kill()
             return
 
