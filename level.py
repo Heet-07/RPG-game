@@ -24,10 +24,21 @@ class Level:
                 (950, self.ground_y - 130, 100, 150),
                 (1250, self.ground_y - 280, 300, 40),
                 (1500, self.ground_y - 240, 50, 260),
-                (1550, self.ground_y - 150, 80, 40)
+                (1550, self.ground_y - 150, 600, 40),
+                (1750, self.ground_y - 380, 550, 40),
+                (2250, self.ground_y - 340, 50, 360),
+                (2300, self.ground_y - 180 , 100, 40)
             ],
             3: [
-                ()
+                (600, self.ground_y - 80, 50, 100),
+                (600, self.ground_y - 130, 150, 50),
+                (750, self.ground_y - 230, 50, 150),
+                (750, self.ground_y - 280, 400, 50),
+                (1150, self.ground_y - 80, 100, 100),
+                (1350, self.ground_y - 280, 500, 50),
+                (1850, self.ground_y - 380, 50, 150),
+                (2000, self.ground_y - 430, 400, 50),
+                
             ],
         }
         
@@ -36,6 +47,20 @@ class Level:
                 (750, self.ground_y - ENEMY_HEIGHT - 100, ENEMY_HEALTH, ENEMY_ATTACK_DAMAGE, ENEMY_SPEED, 3),
                 (700, self.ground_y - ENEMY_HEIGHT - 350, ENEMY_HEALTH, ENEMY_ATTACK_DAMAGE, ENEMY_SPEED, 3),
                 (950, self.ground_y - ENEMY_HEIGHT - 100, ENEMY_HEALTH, ENEMY_ATTACK_DAMAGE, ENEMY_SPEED, 3)
+            ],
+            2 :[
+                (650, self.ground_y - ENEMY_HEIGHT - 300, ENEMY_HEALTH, ENEMY_ATTACK_DAMAGE, ENEMY_SPEED, 3),
+                (750, self.ground_y - ENEMY_HEIGHT - 100, ENEMY_HEALTH, ENEMY_ATTACK_DAMAGE, ENEMY_SPEED, 3),
+                (750, self.ground_y - ENEMY_HEIGHT - 300, ENEMY_HEALTH, ENEMY_ATTACK_DAMAGE, ENEMY_SPEED, 3),
+                (1300, self.ground_y - ENEMY_HEIGHT - 100, ENEMY_HEALTH, ENEMY_ATTACK_DAMAGE, ENEMY_SPEED, 3),
+                (1300, self.ground_y - ENEMY_HEIGHT - 500, ENEMY_HEALTH, ENEMY_ATTACK_DAMAGE, ENEMY_SPEED, 3),
+                (1500, self.ground_y - ENEMY_HEIGHT - 100, ENEMY_HEALTH, ENEMY_ATTACK_DAMAGE, ENEMY_SPEED, 3),
+            ],
+            3 :[
+                (750, self.ground_y - ENEMY_HEIGHT - 100, ENEMY_HEALTH, ENEMY_ATTACK_DAMAGE, ENEMY_SPEED, 3),
+                (1550, self.ground_y - ENEMY_HEIGHT - 400, ENEMY_HEALTH, ENEMY_ATTACK_DAMAGE, ENEMY_SPEED, 3),
+                (2200, self.ground_y - ENEMY_HEIGHT - 550, ENEMY_HEALTH, ENEMY_ATTACK_DAMAGE, ENEMY_SPEED, 3),
+                (2400, self.ground_y - ENEMY_HEIGHT - 500, ENEMY_HEALTH*10, ENEMY_ATTACK_DAMAGE*5, PLAYER_SPEED, 5),
             ]
         }
         

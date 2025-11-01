@@ -30,7 +30,7 @@ class Enemy(pygame.sprite.Sprite):
         self.target = target
         self.attack_range = 70
         self.vision_range = 300
-        self.damage_cooldown = 800
+        self.damage_cooldown = 250
         self.last_attack_time = 0
         self.attacking = False
         self.hitted = False
@@ -70,7 +70,7 @@ class Enemy(pygame.sprite.Sprite):
                 self.last_attack_time = pygame.time.get_ticks()
             if self.state == "death":
                 self.alive = False
-                self.death_sound.play()
+                # self.death_sound.play()
             if self.state == "hit":
                 self.hitted = True
 
@@ -85,7 +85,6 @@ class Enemy(pygame.sprite.Sprite):
             self.health -= damage
             self.last_damage_time = now
             if self.health <= 0 and self.alive:
-                self.death_sound.play()
                 self.health = 0
                 self.set_state("death")
         
@@ -117,11 +116,16 @@ class Enemy(pygame.sprite.Sprite):
 
     def update(self):
         
-        if self.rect.y >= SCREEN_HEIGHT - GROUND_HEIGHT - PLAYER_HEIGHT - 100:
-            self.rect.y = SCREEN_HEIGHT - GROUND_HEIGHT - PLAYER_HEIGHT - 100
+        if self.scales == 3:
+            if self.rect.y >= SCREEN_HEIGHT - GROUND_HEIGHT - PLAYER_HEIGHT - 100:
+                self.rect.y = SCREEN_HEIGHT - GROUND_HEIGHT - PLAYER_HEIGHT - 100
+            else:
+                self.rect.y += 10 * GRAVITY
         else:
-            self.rect.y += 10 * GRAVITY     
-        
+            if self.rect.y >=SCREEN_HEIGHT - GROUND_HEIGHT - PLAYER_HEIGHT*5 - 22:
+                self.rect.y = SCREEN_HEIGHT - GROUND_HEIGHT - PLAYER_HEIGHT*5 - 22
+            else:
+                self.rect.y += 10 * GRAVITY
         now = pygame.time.get_ticks()
         
         # Death check
@@ -146,7 +150,7 @@ class Enemy(pygame.sprite.Sprite):
         dx = self.target.rect.centerx - self.rect.centerx
         dy = self.target.rect.centery - self.rect.centery
         distance = (dx**2 + dy**2)**0.5
-        print(distance)
+        # print(distance)
         # Flip sprite based on direction
         self.side_left = dx < 0
 
@@ -187,3 +191,4 @@ class Enemy(pygame.sprite.Sprite):
                     self.hitted = False
                 else:
                     self.current_frame = 0
+    

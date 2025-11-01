@@ -13,7 +13,7 @@ class Game:
         pygame.init()
         pygame.mixer.init()
 
-        print("🟢 Initializing Game...")
+        # print("🟢 Initializing Game...")
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         pygame.display.set_caption(TITLE)
         self.clock = pygame.time.Clock()
@@ -31,7 +31,7 @@ class Game:
         ]
 
         # --- define world/level state BEFORE load_level() ---
-        self.level_number = 2
+        self.level_number = 3
         self.level = None
         self.player = None
         self.camera_x = 0
@@ -39,9 +39,9 @@ class Game:
         self.damageCooldown = 500
 
         # --- now it's safe to load level ---
-        print("🟢 Loading first level...")
+        # print("🟢 Loading first level...")
         self.load_level(self.level_number)
-        print("✅ Level loaded successfully")
+        # print("✅ Level loaded successfully")
 
 
     def load_level(self, n: int):
@@ -126,7 +126,7 @@ class Game:
             enemy_hit_platforms = pygame.sprite.spritecollide(enemy, self.level.platforms, False, pygame.sprite.collide_mask)
             for p in enemy_hit_platforms:
                 if enemy.rect.centerx >= p.rect.left and enemy.rect.centerx <=p.rect.right:
-                    if self.player.rect.centery <= p.rect.bottom:
+                    if enemy.rect.centery <= p.rect.bottom:
                          enemy.rect.y -= 10 * GRAVITY
                 else:
                     if enemy.rect.centerx >= p.rect.centerx:
@@ -226,7 +226,7 @@ class Game:
                     e.take_damage(PLAYER_ATTACK_DAMAGE)
 
     def run(self):
-        print("🟢 Entering run loop")
+        # print("🟢 Entering run loop")
         while True:
             # you can keep this commented after debugging to avoid spam
             # print("loop")
