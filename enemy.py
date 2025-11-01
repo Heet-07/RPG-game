@@ -21,29 +21,25 @@ class Enemy(pygame.sprite.Sprite):
         self.current_frame = 0
         self.image = self.frames[self.current_frame]
         self.rect = self.image.get_rect(topleft=(x, y))
-
         self.last_update = pygame.time.get_ticks()
-        self.animation_speed = 60  # ms per frame 
-
         self.alive = True
+        self.health = self.max_health = health
+        self.attack_damage = attack_damage
         self.speed = speed
         self.target = target
-        self.health = health
-        self.attack_damage = attack_damage
         self.attack_range = 70
-        self.vision_range = 280
-        self.damage_cooldown = 500
+        self.vision_range = 300
+        self.damage_cooldown = 800
         self.last_attack_time = 0
         self.attacking = False
         self.side_left = True
-
-        self.max_health = health
-        self.health = health
+        self.alpha = 0
 
         self.deathTime = 0
         self.deathDelay = 800
-        # self.last_damage_time=0
-        # self.damage_taken_cooldown=0
+
+        self.last_damage_time=0
+        self.damage_taken_cooldown=500
 
         # Load sounds
         self.death_sound = pygame.mixer.Sound("Audio/orc_death.MP3")  # put your sound file path here
@@ -70,18 +66,24 @@ class Enemy(pygame.sprite.Sprite):
             self.last_update = pygame.time.get_ticks()
             if self.state == "idle":
                 self.last_attack_time = pygame.time.get_ticks()
-
+            if self.state == "death":
+                self.alive = False
 
 
     def take_damage(self, damage):
         """Reduce health when hit by player"""
         now = pygame.time.get_ticks()
         # if now - self.last_damage_time > self.damage_taken_cooldown:
+        self.set_state("hit")
         self.health -= damage
         self.last_damage_time = now
         if self.health <= 0:
             self.health = 0
             self.alive = False
+        if 0 < self.health < 2:
+            self.death_sound.play()
+
+
     
 
     def draw_health_bar(self, screen, camera_x):
@@ -97,96 +99,81 @@ class Enemy(pygame.sprite.Sprite):
         y = self.rect.centery-33
         
         # Only draw if on screen
-        if -bar_width < x < 1024 + bar_width:
+        # if -bar_width < x < 1024 + bar_width:
             # Background (dark red)
-            pygame.draw.rect(screen, (100, 0, 0), (x, y, bar_width, bar_height))
+        pygame.draw.rect(screen, (100, 0, 0), (x, y, bar_width, bar_height))
             
             # Health (green)
-            health_ratio = max(0, self.health / self.max_health)
-            pygame.draw.rect(screen, (0, 200, 0), (x, y, bar_width * health_ratio, bar_height))
+        health_ratio = max(0, self.health / self.max_health)
+        pygame.draw.rect(screen, (0, 200, 0), (x, y, bar_width * health_ratio, bar_height))
             
             # Border
-            pygame.draw.rect(screen, WHITE, (x, y, bar_width, bar_height), 1)
+        pygame.draw.rect(screen, WHITE, (x, y, bar_width, bar_height), 1)
 
 
     def update(self):
+        
         now = pygame.time.get_ticks()
-        dx = self.target.rect.centerx - self.rect.centerx
-        dy = self.target.rect.centery - self.rect.centery
-        distance = (dx**2 + dy**2)**0.5
-
-        # Flip sprite based on direction
-        self.side_left = dx < 0
-
-
-
-        # --- ANIMATION UPDATE FIRST ---
-        if now - self.last_update >= self.animation_speed:
-            self.last_update = now
-            self.current_frame += 1
-            if self.current_frame >= len(self.frames):
-                if self.state == "death":
-                    self.current_frame = len(self.frames) - 1
-                    self.alive = False
-                else:
-                    self.current_frame = 0
-            # Apply flipping
-            self.image = pygame.transform.flip(self.frames[self.current_frame], self.side_left, False)
-                    
-
-
+        
         # Death check
 # --- DEATH CHECK ---
         if not self.alive:
             if self.state != "death":
                 self.death_sound.play()
                 self.set_state("death")
-                self.deathTime = now
-
+                
+            elif self.current_frame >= len(self.frames):
+                    if self.alpha < 100:
+                        self.image.set_alpha(100 - self.alpha*10)
+                        self.alpha += 1
+                    else:
+                        self.kill()
+                    
             else:
+                self.last_update = now
+                self.image = pygame.transform.flip(self.frames[self.current_frame], self.side_left, False)    
+                self.current_frame+=1
                 # Fade out before killing
-                if now - self.deathTime > self.deathDelay - 300:
-                    alpha = max(0, 255 - int((now - self.deathTime - (self.deathDelay - 300)) * 255 / 300))
-                    self.image.set_alpha(alpha)
-                if now - self.deathTime > self.deathDelay:
-                    self.kill()
             return
-
-
-
-
-                   
-            
+        
+        dx = self.target.rect.centerx - self.rect.centerx
+        dy = self.target.rect.centery - self.rect.centery
+        distance = (dx**2 + dy**2)**0.5
+        print(distance)
+        # Flip sprite based on direction
+        self.side_left = dx < 0
 
         
-
         # --- ATTACK LOGIC ---
-        if self.attacking:
-            # Stay in attack animation for 800ms           
-            if now - self.last_attack_time > 450:
-                self.attacking = False
-                self.last_attack_time=now
+        if not self.attacking:
+            if distance < self.attack_range:
                 self.set_state("idle")
-            else :
-                if self.rect.colliderect(self.target.rect):
-                    attack_hit_delay = 200
-                    if now-self.last_attack_time>attack_hit_delay and distance<self.attack_range+5:
-                        self.target.take_damage(self.attack_damage)
-            return  # don’t move during attack
-
-
-        # --- DETECT PLAYER ---
-        if distance < self.attack_range:
-            if now - self.last_attack_time > self.damage_cooldown:
-                print("Enemy attacking!")
-                self.set_state("attack")
-                self.attacking = True
-                self.last_attack_time = now       
+                now = pygame.time.get_ticks() 
+                if now - self.last_attack_time > self.damage_cooldown:
+                    self.set_state("attack")
+                    self.attacking = True
+                    self.last_attack_time = now
+                    
+            elif distance < self.vision_range:
+                self.set_state("walk")
+                if distance!=0:
+                    self.rect.x += int(self.speed * dx / distance)
+                    self.rect.y += int(self.speed * dy / distance)  
             else:
                 self.set_state("idle")
-        elif distance < self.vision_range:
-            self.set_state("walk")
-            if distance != 0:
-                self.rect.x += int(self.speed * dx / distance)
-        else:
-            self.set_state("idle")
+        else: 
+            if self.current_frame == len(self.frames)/2 and distance < self.attack_range:
+                self.target.take_damage(self.attack_damage)
+
+        self.image = pygame.transform.flip(self.frames[self.current_frame], self.side_left, False)
+        
+        # --- ANIMATION UPDATE FIRST ---
+        if now - self.last_update >= FPS:
+            self.last_update = now
+            self.current_frame += 1
+            if self.current_frame >= len(self.frames):
+                if self.state == "attack":
+                    self.set_state("idle")
+                    self.attacking = False
+                else:
+                    self.current_frame = 0

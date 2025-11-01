@@ -299,8 +299,8 @@ class Game:
         if self.player.attacking:
             attack_block = self.player.get_attack_rect()
             now = pygame.time.get_ticks()
-            if attack_block is not None and now-self.lastDamage > self.damageCooldown:
-                if attack_block.colliderect(self.enemy):
+            if (attack_block is not None) and ((now-self.lastDamage) > self.damageCooldown):
+                if attack_block.colliderect(self.enemy.rect) :
                     self.lastDamage = now
                     self.enemy.take_damage(PLAYER_ATTACK_DAMAGE)
 
