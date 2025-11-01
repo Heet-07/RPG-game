@@ -1,0 +1,10 @@
+"""elif self.state == "game_complete":
+                    if event.key == pygame.K_r:
+                        self.load_level(1)
+                        self.state = "playing"
+                    elif event.key == pygame.K_m:
+                        self.state = "menu" """
+
+
+elif self.state == "game_complete":
+            self.draw_game_complete()
