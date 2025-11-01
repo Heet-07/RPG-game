@@ -115,10 +115,10 @@ class Enemy(pygame.sprite.Sprite):
         # pygame.draw.rect(screen, WHITE, (x, y, bar_width, bar_height), 1)
 
 
-    def update(self):
+    def update(self,platforms=None):
         
-        if self.rect.y >= SCREEN_HEIGHT - GROUND_HEIGHT - PLAYER_HEIGHT - 100:
-            self.rect.y = SCREEN_HEIGHT - GROUND_HEIGHT - PLAYER_HEIGHT - 100
+        if self.rect.y >= SCREEN_HEIGHT - GROUND_HEIGHT - ENEMY_HEIGHT - 100:
+            self.rect.y = SCREEN_HEIGHT - GROUND_HEIGHT - ENEMY_HEIGHT - 100
         else:
             self.rect.y += 10 * GRAVITY     
         

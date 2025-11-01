@@ -115,3 +115,11 @@ class Level:
     def spawn_enemy(self, player):
         for e in self.enemy.get(self.number, []):
             self.enemies.add(Enemy(*e, player))
+        for enemy in self.enemies:
+            for p in self.platforms:
+                if (
+                    p.rect.left <= enemy.rect.centerx <= p.rect.right
+                    and enemy.rect.bottom >= p.rect.top - 50  # within 50px vertical range
+                ):
+                    enemy.rect.bottom = p.rect.top
+                    break

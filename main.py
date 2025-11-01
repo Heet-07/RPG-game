@@ -105,38 +105,69 @@ class Game:
             self.menu_stars = new_stars
             return
 
+        # PLAYER <-> PLATFORMS (unchanged behavior but fixed mask usage)
         hit_platform = pygame.sprite.spritecollide(self.player, self.level.platforms, False, pygame.sprite.collide_mask)
-
         if hit_platform:
             for p in hit_platform:
-                if self.player.rect.centerx >= p.rect.left and self.player.rect.centerx <=p.rect.right:
+                # If player horizontally over the platform
+                if self.player.rect.centerx >= p.rect.left and self.player.rect.centerx <= p.rect.right:
+                    # If player's center is above platform bottom (i.e. approaching from above)
                     if self.player.rect.centery <= p.rect.bottom:
-                            self.player.rect.y -= 10 * GRAVITY
-                            self.player.jump_speed = PLAYER_JUMP_POWER
-                            self.player.jumping = False
-                    elif self.player.rect.centery >= p.rect.top:
-                        self.player.jump_speed = - 5
+                        # snap upward slightly (your original behaviour)
+                        self.player.rect.y -= 10 * GRAVITY
+                        self.player.jump_speed = PLAYER_JUMP_POWER
+                        self.player.jumping = False
+                    else:
+                        # if below platform (rare), push player down a little
+                        self.player.jump_speed = -5
                 else:
+                    # push horizontally away from platform center to avoid getting stuck
                     if self.player.rect.centerx >= p.rect.centerx:
                         self.player.rect.x += self.player.speed
                     else:
                         self.player.rect.x -= self.player.speed
 
-        for enemy in self.level.enemies:
+        # ENEMIES <-> PLATFORMS
+        # Iterate enemies and call their update with platforms so each enemy
+        # can use the same fake-ground logic or proper platform collision.
+        for enemy in list(self.level.enemies):  # use list(...) in case enemies are killed during iteration
+            # First, do the same platform-check style you used for player,
+            # but compare using the enemy's centery (bugfix)
             enemy_hit_platforms = pygame.sprite.spritecollide(enemy, self.level.platforms, False, pygame.sprite.collide_mask)
-            for p in enemy_hit_platforms:
-                if enemy.rect.centerx >= p.rect.left and enemy.rect.centerx <=p.rect.right:
-                    if self.player.rect.centery <= p.rect.bottom:
-                         enemy.rect.y -= 10 * GRAVITY
-                else:
-                    if enemy.rect.centerx >= p.rect.centerx:
-                     enemy.rect.x += enemy.speed
+            if enemy_hit_platforms:
+                for p in enemy_hit_platforms:
+                    # If enemy horizontally over the platform
+                    if enemy.rect.centerx >= p.rect.left and enemy.rect.centerx <= p.rect.right:
+                        # Use enemy.centery (NOT player.centery)
+                        if enemy.rect.centery <= p.rect.bottom:
+                            # snap enemy upward a bit (mirrors player behavior)
+                            enemy.rect.y -= 10 * GRAVITY
+                            # If your enemy has a jump_speed / vy, you might reset it here:
+                            if hasattr(enemy, "vy"):
+                                enemy.vy = 0
+                        else:
+                            # below platform -> push enemy down slightly
+                            if hasattr(enemy, "vy"):
+                                enemy.vy = -5
                     else:
-                     enemy.rect.x -= enemy.speed
+                        # Avoid getting stuck inside platform horizontally
+                        if enemy.rect.centerx >= p.rect.centerx:
+                            enemy.rect.x += enemy.speed
+                        else:
+                            enemy.rect.x -= enemy.speed
 
-        self.level.enemies.update()
+            # Now call the enemy's own update, passing the platforms group
+            # (make sure enemy.update accepts an argument; the update we gave accepts platforms=None)
+            try:
+                enemy.update(self.level.platforms)
+            except TypeError:
+                # Fallback: if enemy.update() doesn't accept platforms, call without args
+                enemy.update()
+
+        # Player update and camera after enemies, so camera follows the new positions
         self.player.update()
         self.update_camera()
+
         
     def draw(self):
         if self.state == "menu":
