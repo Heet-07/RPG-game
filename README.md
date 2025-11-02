@@ -18,6 +18,8 @@
 
 Assets and backgrounds
 -level_backgrounds — assets\backgrounds folder -- level_mid/rear images
+-PLayer/Enemy — Photo folder — Orc/Soldier — Attack/Hit/Idle/Walk/Entity
+
 
   level_1
 
@@ -34,9 +36,8 @@ Assets and backgrounds
  
   <img width="1802" height="1187" alt="Screenshot 2025-11-02 224956" src="https://github.com/user-attachments/assets/9ed2fbac-c08d-4ebf-b3f8-a60564a7d98c" />
 
-  
-  
--PLayer/Enemy — Photo folder — Orc/Soldier — Attack/Hit/Idle/Walk/Entity
+
+
 
 Project structure
 - main.py — entry point, menu + game loop, level loading, camera, debug overlay
