@@ -35,3 +35,5 @@ ENEMY_HEALTH = 3
 # Level defaults
 GROUND_HEIGHT = 80  # ground thickness in pixels
 WORLD_WIDTH = 3000  # pixels wide, you can increase later
+
+TOTAL_LEVELS = 3

@@ -13,14 +13,17 @@ class Game:
         pygame.init()
         pygame.mixer.init()
 
-        # print("🟢 Initializing Game...")
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         pygame.display.set_caption(TITLE)
         self.clock = pygame.time.Clock()
         self.font = pygame.font.Font(None, 28)
 
         # Menu state and pixel look
-        self.state = "menu"  # menu | playing
+        self.state = "menu"  # menu | playing | level_complete | game_complete | level_select
+        self.level_completed = {}  # e.g. {1: True, 2: False, 3: False}
+        for i in range(1, TOTAL_LEVELS + 1):
+            self.level_completed[i] = False
+
         self.menu_tick = 0
         self.pixel_size = (256, 192)
         self.pixel_font_small = pygame.font.Font(None, 16)
@@ -31,33 +34,38 @@ class Game:
         ]
 
         # --- define world/level state BEFORE load_level() ---
-        self.level_number = 3
+        self.level_number = 1
         self.level = None
         self.player = None
+        self.enemy = None
         self.camera_x = 0
 
-        self.damageCooldown = 500
+        self.lastDamage = 0
+        self.damageCooldown = 500  
 
         # --- now it's safe to load level ---
-        # print("🟢 Loading first level...")
         self.load_level(self.level_number)
-        # print("✅ Level loaded successfully")
 
 
     def load_level(self, n: int):
         self.level_number = n
         self.level = Level(level_number=n)
-        # if (self.player is None) and (self.enemy is None):
-        self.player = Player(64, self.level.ground_y - PLAYER_HEIGHT - 100, PLAYER_HEALTH, PLAYER_ATTACK_DAMAGE, PLAYER_SPEED, 3)
-        self.level.spawn_enemy(self.player)
-        # else:
-        #     # Reset player on ground at start
-        #     self.player.x = 64
-        #     self.player.y = self.level.ground_y - PLAYER_HEIGHT
-        # self.camera_x = 0
 
-        # self.player.draw_health_bar(self.screen)
-        # self.enemy.draw_health_bar(self.screen, self.camera_x)
+        # Create player (preserve health logic if needed)
+        if self.player is None:
+            self.player = Player(64, self.level.ground_y - PLAYER_HEIGHT - 100,
+                                PLAYER_HEALTH, PLAYER_ATTACK_DAMAGE, PLAYER_SPEED, 3)
+        else:
+            # Reset player position and health
+            self.player.x = 64
+            self.player.y = self.level.ground_y - PLAYER_HEIGHT
+            self.player.health = PLAYER_HEALTH
+
+        # --- Always create a new enemy ---
+        self.enemy = Enemy(800, self.level.ground_y - ENEMY_HEIGHT - 100,
+                        ENEMY_HEALTH, ENEMY_ATTACK_DAMAGE, ENEMY_SPEED, 3, self.player)
+
+        self.camera_x = 0
 
 
     def update_camera(self):
@@ -81,6 +89,9 @@ class Game:
                         # Start game
                         self.state = "playing"
                         self.load_level(self.level_number)
+                    elif event.key == pygame.K_4:
+                        self.state = "level_select"
+
                 elif self.state == "playing":
                     if event.key == pygame.K_1:
                         self.load_level(1)
@@ -88,6 +99,30 @@ class Game:
                         self.load_level(2)
                     elif event.key == pygame.K_3:
                         self.load_level(3)
+                    elif event.key == pygame.K_4:
+                        self.state = "level_select"
+                elif self.state == "level_complete":
+                    if event.key == pygame.K_n:
+                        # Go to next level or loop back to 1
+                        next_level = self.level_number + 1 if self.level_number < TOTAL_LEVELS else 1
+                        self.load_level(next_level)
+                        self.state = "playing"
+                    elif event.key == pygame.K_l:
+                        self.state = "level_select"
+                    elif event.key == pygame.K_m:
+                        self.state = "menu"
+
+                elif self.state == "level_select":
+                    if event.key == pygame.K_m:
+                        self.state = "menu"
+                    elif event.key in (pygame.K_1, pygame.K_2, pygame.K_3):
+                        level_choice = int(event.unicode)
+
+                        # Can only play a level if it is unlocked (previous completed) or already completed
+                        if self.level_completed.get(level_choice - 1, True) or self.level_completed[level_choice]:
+                            self.load_level(level_choice)
+                            self.state = "playing"
+
 
     def update(self):
         if self.state == "menu":
@@ -136,44 +171,42 @@ class Game:
 
         self.level.enemies.update()
         self.player.update()
+        self.enemy.update()
         self.update_camera()
+
+        # --- LEVEL TRANSITION CHECK ---
+        # When all enemies are dead AND player reaches end of level width
+        end_x = WORLD_WIDTH - 100  # near the right edge (you can tweak)
+
+        if not self.enemy.alive and self.player.rect.right >= end_x and self.state == "playing":
+            # Mark level as completed
+            self.level_completed[self.level_number] = True
+            self.state = "level_complete"
+
         
     def draw(self):
         if self.state == "menu":
             self.draw_menu()
-        else: 
+        elif self.state == "level_complete":
+            self.draw_level_complete()
+        
+        elif self.state == "level_select":
+            self.draw_level_select()
+
+    
+        else:
             self.level.draw(self.screen, self.camera_x)
-            self.screen.blit(self.player.image, (self.player.rect.x - self.camera_x, self.player.rect.y))
-            for enemy in self.level.enemies:
-                self.screen.blit(enemy.image, (enemy.rect.x - self.camera_x, enemy.rect.y))
-            
-            # Draw health bar **after everything else**
+            self.screen.blit(self.player.image, self.player.rect)
+            self.screen.blit(self.enemy.image, self.enemy.rect)
+
             self.player.draw_health_bar(self.screen)
-            # if self.enemy.alive:
-            #     self.enemy.draw_health_bar(self.screen, self.camera_x)
-            # else:
-            #     self.enemy.kill()
+            if self.enemy.alive:
+                self.enemy.draw_health_bar(self.screen, self.camera_x)
 
-            # UI hint
-            draw_text(self.screen, "A/D or Arrows to move, Space to attack, Esc to quit", self.font, WHITE, 16, 16)
-            # Debug overlay
-            # self.draw_debug()
+            draw_text(self.screen, "A/D or Arrows to move, Space to attack, Esc to quit",
+                    self.font, WHITE, 16, 16)
+
         pygame.display.flip()
-
-    def draw_debug(self):
-        y = 44
-        line_h = 20
-        dbg = [
-            f"fps: {self.clock.get_fps():.1f}",
-            f"state: {self.state}",
-            f"level: {self.level_number}",
-            f"player x:{self.player.x:.1f} y:{self.player.y:.1f}",
-            f"vel vx:{self.player.vx:.1f} vy:{self.player.vy:.1f}",
-            f"camera_x:{self.camera_x}",
-        ]
-        for s in dbg:
-            draw_text(self.screen, s, self.font, WHITE, 16, y)
-            y += line_h
 
     def draw_menu(self):
         # Low-res render target for crisp pixel look
@@ -217,13 +250,57 @@ class Game:
         scaled = pygame.transform.scale(surf, (SCREEN_WIDTH, SCREEN_HEIGHT))
         self.screen.blit(scaled, (0, 0))
 
+        
+    def draw_level_complete(self):
+        self.screen.fill((30, 30, 60))
+        draw_text(self.screen, f"Level {self.level_number} Complete!", self.font, GREEN,
+                SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 60, center=True)
+
+        # If next level exists
+        if self.level_number < 4:
+            draw_text(self.screen, "Press N for Next Level", self.font, WHITE,
+                    SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 10, center=True)
+        else:
+            draw_text(self.screen, "All levels completed!", self.font, GREEN,
+                    SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 10, center=True)
+            draw_text(self.screen, "Press N to Replay from Level 1", self.font, WHITE,
+                    SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 20, center=True)
+
+        draw_text(self.screen, "Press L for Level Select", self.font, WHITE,
+                SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 60, center=True)
+        draw_text(self.screen, "Press M to return to Main Menu", self.font, WHITE,
+                SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 90, center=True)
+
+        
+    def draw_level_select(self):
+        self.screen.fill((25, 25, 45))
+        draw_text(self.screen, "Select Level", self.font, WHITE,
+                SCREEN_WIDTH // 2, 100, center=True)
+
+        y_offset = 200
+        for i in range(1, TOTAL_LEVELS + 1):
+            status = "Completed" if self.level_completed[i] else "Locked" if not self.level_completed.get(i - 1, True) else "Unlocked"
+            color = GREEN if status == "Completed" else WHITE if status == "Unlocked" else GRAY
+            draw_text(self.screen, f"Level {i}: {status}", self.font, color,
+                    SCREEN_WIDTH // 2, y_offset, center=True)
+            y_offset += 50
+
+        draw_text(self.screen, "Press 1/2/3 to play unlocked or completed levels", self.font, WHITE,
+                SCREEN_WIDTH // 2, SCREEN_HEIGHT - 120, center=True)
+        draw_text(self.screen, "Press M to return to Main Menu", self.font, WHITE,
+                SCREEN_WIDTH // 2, SCREEN_HEIGHT - 80, center=True)
+
+
+
+
     def player_attack(self):
         if self.player.attacking:
-            # attack_block = self.player.get_attack_rect()
+            attack_block = self.player.get_attack_rect()
             now = pygame.time.get_ticks()
-            for e in self.level.enemies:
-                if not e.hitted and abs(self.player.rect.centerx - e.rect.centerx) < 75 and abs(self.player.rect.centery - e.rect.centery) < 25 and self.player.side_left != e.side_left:
-                    e.take_damage(PLAYER_ATTACK_DAMAGE)
+            if (attack_block is not None) and ((now-self.lastDamage) > self.damageCooldown):
+                if attack_block.colliderect(self.enemy.rect) :
+                    self.lastDamage = now
+                    self.enemy.take_damage(PLAYER_ATTACK_DAMAGE)
 
     def run(self):
         # print("🟢 Entering run loop")
