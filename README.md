@@ -7,12 +7,13 @@
 - Controls:
   - start_Menu: ENTER = start, ESC = quit
 
-    ![start_menu](Photo/Screenshot 2025-11-02 211148.png)
+    <img width="1790" height="1464" alt="Screenshot 2025-11-02 211148" src="https://github.com/user-attachments/assets/32b24a29-93f1-4c71-932e-5cd0091733fb" />
 
 
   - Game: A/D or ←/→ = move, SPACE = jump, ESC = quit, Z = Attack, P = Pause, L = level-selector
  
-    ![controls](Photo/Screenshot 2025-11-02 211400.png)
+    <img width="1788" height="284" alt="Screenshot 2025-11-02 211400" src="https://github.com/user-attachments/assets/2977acd6-0699-4976-9eb9-0f3774f677b0" />
+
 
 
 Assets and backgrounds
@@ -20,15 +21,18 @@ Assets and backgrounds
 
   level_1
 
-  ![level_1](Photo/Screenshot 2025-11-02 211414.png)
+  <img width="1792" height="1172" alt="Screenshot 2025-11-02 211414" src="https://github.com/user-attachments/assets/8a0bf3fa-ffca-4857-898f-a2f8a6e0e589" />
+
   
   level_2
 
-  ![level_2](Photo/Screenshot 2025-11-02 211537.png)
+  <img width="1786" height="1186" alt="Screenshot 2025-11-02 211537" src="https://github.com/user-attachments/assets/9a54f3ad-527e-42a5-b89e-fe26f7c633fd" />
+
   
   lwvel_3
 
-  ![level_3](Photo/Screenshot 2025-11-02 211639.png)
+  <img width="1787" height="1160" alt="Screenshot 2025-11-02 211639" src="https://github.com/user-attachments/assets/4bfcbe70-e384-4814-a37e-a6ac61e91b85" />
+
   
   
 -PLayer/Enemy — Photo folder — Orc/Soldier — Attack/Hit/Idle/Walk/Entity
