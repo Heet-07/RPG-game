@@ -31,7 +31,8 @@ Assets and backgrounds
   
   lwvel_3
 
-  <img width="1787" height="1160" alt="Screenshot 2025-11-02 211639" src="https://github.com/user-attachments/assets/4bfcbe70-e384-4814-a37e-a6ac61e91b85" />
+ 
+  <img width="1802" height="1187" alt="Screenshot 2025-11-02 224956" src="https://github.com/user-attachments/assets/9ed2fbac-c08d-4ebf-b3f8-a60564a7d98c" />
 
   
   
