@@ -297,16 +297,33 @@ class Game:
 
         
     def draw_player_dead(self):
-        self.screen.fill((15, 0, 0))
+        # --- Draw the world and the player's dead body ---
+        self.level.draw(self.screen, self.camera_x)
 
+        # Draw the player's body (as-is, not respawned)
+        self.screen.blit(self.player.image, (self.player.rect.x - self.camera_x, self.player.rect.y))
+
+        # Optionally draw enemies still visible (adds realism)
+        for enemy in self.level.enemies:
+            self.screen.blit(enemy.image, (enemy.rect.x - self.camera_x, enemy.rect.y))
+
+        # --- Apply a single translucent red overlay (static, no flashing) ---
+        overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
+        overlay.set_alpha(160)  # adjust transparency (150–180 looks good)
+        overlay.fill((40, 0, 0))  # dark red tone
+        self.screen.blit(overlay, (0, 0))
+
+        # --- Display the "You Died" text and options ---
         draw_text(self.screen, "💀 You Died 💀", self.font, RED,
-                  SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 80, center=True)
+                SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 100, center=True)
         draw_text(self.screen, "Press R to Retry Level", self.font, WHITE,
-                  SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 20, center=True)
+                SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 40, center=True)
         draw_text(self.screen, "Press L for Level Select", self.font, WHITE,
-                  SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 20, center=True)
+                SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 10, center=True)
         draw_text(self.screen, "Press M to return to Main Menu", self.font, WHITE,
-                  SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 60, center=True)
+                SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 60, center=True)
+
+
 
 
     def draw_level_complete(self):
