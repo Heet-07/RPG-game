@@ -13,10 +13,11 @@ class Level:
         self.ground_y = SCREEN_HEIGHT - GROUND_HEIGHT
         self.grass_pattern = self._generate_grass_pattern()
 
-        self.enemies = pygame.sprite.Group()
+        self.enemies = pygame.sprite.Group() # make group of the enemy
 
         # Platforms
-        self.platforms = pygame.sprite.Group()
+        self.platforms = pygame.sprite.Group() # make group of platform
+        # location and size of each platfrom according to the level
         self.layouts = {
             1: [
                 (600, self.ground_y - 170, 800, 40),
@@ -44,7 +45,7 @@ class Level:
                 
             ],
         }
-        
+        # location and all other information of each enemy according to the level
         self.enemy={
             1 :[
                 (750, self.ground_y - ENEMY_HEIGHT - 100, ENEMY_HEALTH, ENEMY_ATTACK_DAMAGE, ENEMY_SPEED, 3),
@@ -63,10 +64,11 @@ class Level:
                 (750, self.ground_y - ENEMY_HEIGHT - 100, ENEMY_HEALTH, ENEMY_ATTACK_DAMAGE, ENEMY_SPEED, 3),
                 (1550, self.ground_y - ENEMY_HEIGHT - 400, ENEMY_HEALTH, ENEMY_ATTACK_DAMAGE, ENEMY_SPEED, 3),
                 (2200, self.ground_y - ENEMY_HEIGHT - 550, ENEMY_HEALTH, ENEMY_ATTACK_DAMAGE, ENEMY_SPEED, 3),
-                (2400, self.ground_y - ENEMY_HEIGHT - 500, ENEMY_HEALTH*10, ENEMY_ATTACK_DAMAGE*5, PLAYER_SPEED, 5),
+                (2400, self.ground_y - ENEMY_HEIGHT - 500, ENEMY_HEALTH*5, ENEMY_ATTACK_DAMAGE*5, PLAYER_SPEED, 5),
             ]
         }
         
+        # add platform in the group
         for p in self.layouts.get(self.number, []):
             self.platforms.add(Platform(*p))
         
@@ -74,12 +76,10 @@ class Level:
         self._load_background_layers()
 
     # ----------------------------------------------------------------------
+    # set the background
     def _load_background_layers(self):
         """Load level-specific parallax backgrounds (rear & mid)."""
         bg_dir = os.path.join(os.getcwd(), "assets", "backgrounds")
-        print(f"📁 Background folder: {bg_dir}")
-
-
 
         # Expected filenames (use your exact files)
         layer_files = [
@@ -107,6 +107,7 @@ class Level:
             self.layers.append((surf, 0.2))
 
     # ----------------------------------------------------------------------
+    # draw the background
     def draw_background(self, surface, camera_x: int = 0):
         """Draw parallax background layers."""
         for img, speed in self.layers:
@@ -115,17 +116,7 @@ class Level:
             surface.blit(img, (x - w, 0))
             surface.blit(img, (x, 0))
 
-    """def draw_ground(self, surface, camera_x: int = 0):
-        '''Draw simple flat ground.'''
-        ground_color = (40, 60, 90)
-        pygame.draw.rect(surface, (40, 60, 90), (0 - camera_x, self.ground_y, WORLD_WIDTH, GROUND_HEIGHT))
-
-        tick_color = (90, 120, 160)
-        spacing = 64
-        offset = (-int(camera_x)) % spacing
-        for x in range(offset, SCREEN_WIDTH + spacing, spacing):
-            pygame.draw.line(surface, tick_color, (x, self.ground_y), (x, self.ground_y + 12), 2)"""
-    
+    # generate ground
     def _generate_grass_pattern(self):
         """Pre-generate a static grass pattern and dirt patches once per level."""
         grass = []
@@ -144,7 +135,7 @@ class Level:
 
         return {"grass": grass, "patch": patch}
 
-    
+    # draw the ground
     def draw_ground(self, surface, camera_x: int = 0):
         """Draw polished static ground with pre-generated grass and patches."""
         # Dirt gradient
@@ -181,21 +172,23 @@ class Level:
                                 (screen_x, self.ground_y + py, pw, 4))
 
 
-
+    #draw platforms
     def draw_platforms(self, surface, camera_x: int = 0):
         """Draw all platforms relative to camera, only if visible."""
         for p in self.platforms:
             screen_x = p.rect.x - camera_x
             # if -200 < screen_x < SCREEN_WIDTH + 200:  # simple cull
             surface.blit(p.image, (screen_x, p.rect.y))
-
-
+ 
+    # draw background, ground and platforms
     def draw(self, surface, camera_x: int = 0):
         """Render order: background → ground → platforms."""
         self.draw_background(surface, camera_x)
         self.draw_ground(surface, camera_x)
         self.draw_platforms(surface, camera_x)
 
+
+    # spawn enemies according to the level
     def spawn_enemy(self, player):
         for e in self.enemy.get(self.number, []):
             self.enemies.add(Enemy(*e, player))

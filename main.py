@@ -84,14 +84,6 @@ class Game:
                     elif event.key == pygame.K_l:
                         self.state = "level_select"
 
-                #     if event.key == pygame.K_1:
-                #         self.load_level(1)
-                #     elif event.key == pygame.K_2:
-                #         self.load_level(2)
-                #     elif event.key == pygame.K_3:
-                #         self.load_level(3)
-                #     elif event.key == pygame.K_4:
-                #         self.state = "level_select"
                 elif self.state == "level_complete":
                     if event.key == pygame.K_n:
                         # Go to next level or loop back to 1
@@ -117,8 +109,6 @@ class Game:
                         ):
                             self.load_level(level_choice)
                             self.state = "playing"
-
-
 
                         # Can only play a level if it is unlocked (previous completed) or already completed
                         if level_choice == 1 or self.level_completed.get(level_choice - 1, False) or self.level_completed[level_choice]:
@@ -146,8 +136,6 @@ class Game:
                         self.state = "level_select"
                     elif event.key == pygame.K_m:
                         self.state = "menu"
-
-
 
 
     def update(self):
@@ -225,21 +213,22 @@ class Game:
 
         
     def draw(self):
+        
         if self.state == "menu":
             self.draw_menu()
+            
         elif self.state == "level_complete":
             self.draw_level_complete()
         
         elif self.state == "level_select":
             self.draw_level_select()
+        
         elif self.state == "paused":
             self.draw_pause_menu()
+        
         elif self.state == "player_dead":
             self.draw_player_dead()
 
-
-
-    
         else:
             self.level.draw(self.screen, self.camera_x)
             self.screen.blit(self.player.image, (self.player.rect.x - self.camera_x, self.player.rect.y))
@@ -253,49 +242,6 @@ class Game:
 
         pygame.display.flip()
 
-    """def draw_menu(self):
-        # Low-res render target for crisp pixel look
-        pw, ph = self.pixel_size
-        surf = pygame.Surface((pw, ph))
-        # Background gradient sky
-        surf.fill((40, 40, 75))
-        for i in range(ph//2):
-            c = 75 + i // 2
-            pygame.draw.line(surf, (c, 160, 220), (0, i), (pw, i))
-        # Starfield
-        for x, y in self.menu_stars:
-            surf.set_at((x, y), (255, 255, 255))
-        
-        # Silhouette hills
-        pygame.draw.rect(surf, (20, 35, 60), (0, ph-40, pw, 40))
-        pygame.draw.rect(surf, (15, 25, 45), (0, ph-28, pw, 28))
-
-        # Title and prompt (pixel fonts)
-        title = "GOBLIN SLAYER!!!!"
-        prompt = "Press ENTER to Start"
-        # Simple blinking
-        show_prompt = (self.menu_tick // 30) % 2 == 0
-        title_font = self.pixel_font_large
-        small_font = self.pixel_font_small
-        # Draw title centered
-        title_surf = title_font.render(title, True, WHITE)
-        trect = title_surf.get_rect(center=(pw//2, ph//2 - 20))
-        surf.blit(title_surf, trect)
-        # Prompt
-        if show_prompt:
-            prompt_surf = small_font.render(prompt, True, (255, 230, 120))
-            prect = prompt_surf.get_rect(center=(pw//2, ph//2 + 8))
-            surf.blit(prompt_surf, prect)
-
-        # Hint
-        hint = small_font.render("Esc to Quit • L to pause the Game", True, (210, 210, 210))
-        hrect = hint.get_rect(center=(pw//2, ph - 14))
-        surf.blit(hint, hrect)
-
-        # Scale up to screen size with nearest-neighbor
-        scaled = pygame.transform.scale(surf, (SCREEN_WIDTH, SCREEN_HEIGHT))
-        self.screen.blit(scaled, (0, 0)) """
-    
 
     def draw_menu(self):
         # Low-res render target for crisp pixel look
@@ -356,7 +302,6 @@ class Game:
         scaled = pygame.transform.scale(surf, (SCREEN_WIDTH, SCREEN_HEIGHT))
         self.screen.blit(scaled, (0, 0))
 
-
         
     def draw_player_dead(self):
         # --- Draw the world and the player's dead body ---
@@ -384,8 +329,6 @@ class Game:
                 SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 10, center=True)
         draw_text(self.screen, "Press M to return to Main Menu", self.font, WHITE,
                 SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 60, center=True)
-
-
 
 
     def draw_level_complete(self):
@@ -474,16 +417,12 @@ class Game:
 
     def player_attack(self):
        if self.player.attacking:
-            # attack_block = self.player.get_attack_rect()
             now = pygame.time.get_ticks()
             for e in self.level.enemies:
                 if not e.hitted and abs(self.player.rect.centerx - e.rect.centerx) < 75 and abs(self.player.rect.centery - e.rect.centery) < 25 and self.player.side_left != e.side_left:
                     e.take_damage(PLAYER_ATTACK_DAMAGE)
     def run(self):
-        # print("🟢 Entering run loop")
         while True:
-            # you can keep this commented after debugging to avoid spam
-            # print("loop")
             self.handle_events()
             self.draw()
             self.update()
@@ -492,5 +431,3 @@ class Game:
 
 if __name__ == "__main__":
     Game().run()
-
-
