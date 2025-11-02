@@ -7,17 +7,29 @@
 - Controls:
   - start_Menu: ENTER = start, ESC = quit
 
+    ![start_menu](Photo/Screenshot 2025-11-02 211148.png)
+
 
   - Game: A/D or ←/→ = move, SPACE = jump, ESC = quit, Z = Attack, P = Pause, L = level-selector
  
-- 
+    ![controls](Photo/Screenshot 2025-11-02 211400.png)
+
 
 Assets and backgrounds
 -level_backgrounds — assets\backgrounds folder -- level_mid/rear images
 
   level_1
+
+  ![level_1](Photo/Screenshot 2025-11-02 211414.png)
+  
   level_2
+
+  ![level_2](Photo/Screenshot 2025-11-02 211537.png)
+  
   lwvel_3
+
+  ![level_3](Photo/Screenshot 2025-11-02 211639.png)
+  
   
 -PLayer/Enemy — Photo folder — Orc/Soldier — Attack/Hit/Idle/Walk/Entity
 
