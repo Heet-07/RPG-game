@@ -77,8 +77,13 @@ class Game:
                         self.load_level(self.level_number)
                     elif event.key == pygame.K_4:
                         self.state = "level_select"
+                
+                elif self.state == "playing":
+                    if event.key == pygame.K_p:
+                        self.state = "paused"
+                    elif event.key == pygame.K_l:
+                        self.state = "level_select"
 
-                # elif self.state == "playing":
                 #     if event.key == pygame.K_1:
                 #         self.load_level(1)
                 #     elif event.key == pygame.K_2:
@@ -104,13 +109,51 @@ class Game:
                     elif event.key in (pygame.K_1, pygame.K_2, pygame.K_3):
                         level_choice = int(event.unicode)
 
-                        # Can only play a level if it is unlocked (previous completed) or already completed
-                        if self.level_completed.get(level_choice - 1, True) or self.level_completed[level_choice]:
+                        # --- Determine if playable ---
+                        if (
+                            level_choice == 1 or
+                            self.level_completed.get(level_choice - 1, False) or
+                            self.level_completed[level_choice]
+                        ):
                             self.load_level(level_choice)
                             self.state = "playing"
 
 
+
+                        # Can only play a level if it is unlocked (previous completed) or already completed
+                        if level_choice == 1 or self.level_completed.get(level_choice - 1, False) or self.level_completed[level_choice]:
+                            self.load_level(level_choice)
+                            self.state = "playing"
+
+
+                elif self.state == "paused":
+                    if event.key == pygame.K_p:
+                        # Resume
+                        self.state = "playing"
+                    elif event.key == pygame.K_m:
+                        # Return to main menu
+                        self.state = "menu"
+                    elif event.key == pygame.K_l:
+                        # Go to level select
+                        self.state = "level_select"
+
+                elif self.state == "player_dead":
+                    if event.key == pygame.K_r:
+                        # Retry same level
+                        self.load_level(self.level_number)
+                        self.state = "playing"
+                    elif event.key == pygame.K_l:
+                        self.state = "level_select"
+                    elif event.key == pygame.K_m:
+                        self.state = "menu"
+
+
+
+
     def update(self):
+        if self.state == "paused":
+            return
+
         if self.state == "menu":
             # Animate menu stars
             self.menu_tick += 1
@@ -157,6 +200,11 @@ class Game:
 
         self.level.enemies.update()
         self.player.update()
+        # --- Player death check ---
+        if self.player.health <= 0 and self.state == "playing":
+            self.state = "player_dead"
+            return
+
         self.update_camera()
 
         # --- LEVEL TRANSITION CHECK ---
@@ -164,9 +212,16 @@ class Game:
         end_x = WORLD_WIDTH - 100  # near the right edge (you can tweak)
 
         if not self.level.enemies and self.player.rect.centerx >= end_x and self.state == "playing":
-            # Mark level as completed
+            # Mark current level as completed
             self.level_completed[self.level_number] = True
+
+            # Automatically unlock next level if it exists
+            next_level = self.level_number + 1
+            if next_level <= TOTAL_LEVELS:
+                self.level_completed[next_level] = self.level_completed.get(next_level, False)
+
             self.state = "level_complete"
+
 
         
     def draw(self):
@@ -177,6 +232,12 @@ class Game:
         
         elif self.state == "level_select":
             self.draw_level_select()
+        elif self.state == "paused":
+            self.draw_pause_menu()
+        elif self.state == "player_dead":
+            self.draw_player_dead()
+
+
 
     
         else:
@@ -235,13 +296,41 @@ class Game:
         self.screen.blit(scaled, (0, 0))
 
         
+    def draw_player_dead(self):
+        self.screen.fill((15, 0, 0))
+
+        draw_text(self.screen, "💀 You Died 💀", self.font, RED,
+                  SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 80, center=True)
+        draw_text(self.screen, "Press R to Retry Level", self.font, WHITE,
+                  SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 20, center=True)
+        draw_text(self.screen, "Press L for Level Select", self.font, WHITE,
+                  SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 20, center=True)
+        draw_text(self.screen, "Press M to return to Main Menu", self.font, WHITE,
+                  SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 60, center=True)
+
+
     def draw_level_complete(self):
         self.screen.fill((30, 30, 60))
+
+        # --- Special ending message for Level 3 ---
+        if self.level_number == 3:
+            draw_text(self.screen, "🎉 Congratulations! 🎉", self.font, GREEN,
+                    SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 80, center=True)
+            draw_text(self.screen, "You’ve completed the entire game!", self.font, WHITE,
+                    SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 40, center=True)
+            draw_text(self.screen, "Press N to Replay from Level 1", self.font, WHITE,
+                    SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 10, center=True)
+            draw_text(self.screen, "Press L for Level Select", self.font, WHITE,
+                    SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 50, center=True)
+            draw_text(self.screen, "Press M to return to Main Menu", self.font, WHITE,
+                    SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 90, center=True)
+            return  # stop here so the normal message below doesn’t draw
+
+        # --- Normal level complete message for Levels 1 & 2 ---
         draw_text(self.screen, f"Level {self.level_number} Complete!", self.font, GREEN,
                 SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 60, center=True)
 
-        # If next level exists
-        if self.level_number < 4:
+        if self.level_number < TOTAL_LEVELS:
             draw_text(self.screen, "Press N for Next Level", self.font, WHITE,
                     SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 10, center=True)
         else:
@@ -256,6 +345,24 @@ class Game:
                 SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 90, center=True)
 
         
+    def draw_pause_menu(self):
+        overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
+        overlay.set_alpha(180)
+        overlay.fill((0, 0, 0))
+        self.screen.blit(overlay, (0, 0))
+
+        draw_text(self.screen, "Game Paused", self.font, WHITE,
+                  SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 80, center=True)
+        draw_text(self.screen, "Press P to Resume", self.font, WHITE,
+                  SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 20, center=True)
+        draw_text(self.screen, "Press L for Level Select", self.font, WHITE,
+                  SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 20, center=True)
+        draw_text(self.screen, "Press M to return to Main Menu", self.font, WHITE,
+                  SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 60, center=True)
+
+
+
+        
     def draw_level_select(self):
         self.screen.fill((25, 25, 45))
         draw_text(self.screen, "Select Level", self.font, WHITE,
@@ -263,7 +370,15 @@ class Game:
 
         y_offset = 200
         for i in range(1, TOTAL_LEVELS + 1):
-            status = "Completed" if self.level_completed[i] else "Locked" if not self.level_completed.get(i - 1, True) else "Unlocked"
+            if i == 1:
+                status = "Unlocked" if not self.level_completed[i] else "Completed"
+            elif self.level_completed[i]:
+                status = "Completed"
+            elif self.level_completed.get(i - 1, False):
+                status = "Unlocked"
+            else:
+                status = "Locked"
+
             color = GREEN if status == "Completed" else WHITE if status == "Unlocked" else GRAY
             draw_text(self.screen, f"Level {i}: {status}", self.font, color,
                     SCREEN_WIDTH // 2, y_offset, center=True)

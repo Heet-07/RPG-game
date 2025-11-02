@@ -1,5 +1,6 @@
 import os
 import pygame
+import random
 from settings import *
 from enemy import Enemy
 
@@ -10,6 +11,8 @@ class Level:
         from game_platform import Platform
         self.number = level_number
         self.ground_y = SCREEN_HEIGHT - GROUND_HEIGHT
+        self.grass_pattern = self._generate_grass_pattern()
+
         self.enemies = pygame.sprite.Group()
 
         # Platforms
@@ -112,8 +115,8 @@ class Level:
             surface.blit(img, (x - w, 0))
             surface.blit(img, (x, 0))
 
-    def draw_ground(self, surface, camera_x: int = 0):
-        """Draw simple flat ground."""
+    """def draw_ground(self, surface, camera_x: int = 0):
+        '''Draw simple flat ground.'''
         ground_color = (40, 60, 90)
         pygame.draw.rect(surface, (40, 60, 90), (0 - camera_x, self.ground_y, WORLD_WIDTH, GROUND_HEIGHT))
 
@@ -121,7 +124,63 @@ class Level:
         spacing = 64
         offset = (-int(camera_x)) % spacing
         for x in range(offset, SCREEN_WIDTH + spacing, spacing):
-            pygame.draw.line(surface, tick_color, (x, self.ground_y), (x, self.ground_y + 12), 2)
+            pygame.draw.line(surface, tick_color, (x, self.ground_y), (x, self.ground_y + 12), 2)"""
+    
+    def _generate_grass_pattern(self):
+        """Pre-generate a static grass pattern and dirt patches once per level."""
+        grass = []
+        patch = []
+
+        random.seed(self.number)  # unique but consistent per level
+        for x in range(0, WORLD_WIDTH, 8):
+            height = 6 + random.randint(-2, 2)
+            grass.append((x, height))
+
+        for _ in range(40):  # dirt detail
+            px = random.randint(0, WORLD_WIDTH)
+            pw = random.randint(20, 60)
+            py = random.randint(4, GROUND_HEIGHT - 8)
+            patch.append((px, pw, py))
+
+        return {"grass": grass, "patch": patch}
+
+    
+    def draw_ground(self, surface, camera_x: int = 0):
+        """Draw polished static ground with pre-generated grass and patches."""
+        # Dirt gradient
+        top_color = (60, 90, 40)
+        bottom_color = (30, 50, 20)
+        for y in range(GROUND_HEIGHT):
+            ratio = y / GROUND_HEIGHT
+            r = int(top_color[0] * (1 - ratio) + bottom_color[0] * ratio)
+            g = int(top_color[1] * (1 - ratio) + bottom_color[1] * ratio)
+            b = int(top_color[2] * (1 - ratio) + bottom_color[2] * ratio)
+            pygame.draw.line(surface, (r, g, b),
+                            (0, self.ground_y + y),
+                            (SCREEN_WIDTH, self.ground_y + y))
+
+        # Grass top — STATIC, pre-generated
+        for gx, height in self.grass_pattern["grass"]:
+            screen_x = gx - camera_x
+            if -8 <= screen_x <= SCREEN_WIDTH:
+                pygame.draw.rect(surface, (80, 200, 80),
+                                (screen_x, self.ground_y - height, 8, height))
+
+        # Optional soft shadow for depth
+        for gx, height in self.grass_pattern["grass"]:
+            screen_x = gx - camera_x
+            if -8 <= screen_x <= SCREEN_WIDTH:
+                pygame.draw.rect(surface, (40, 80, 40),
+                                (screen_x, self.ground_y - 2, 8, 2))
+
+        # Dirt patches for texture
+        for px, pw, py in self.grass_pattern["patch"]:
+            screen_x = px - camera_x
+            if -pw <= screen_x <= SCREEN_WIDTH:
+                pygame.draw.rect(surface, (40, 70, 40),
+                                (screen_x, self.ground_y + py, pw, 4))
+
+
 
     def draw_platforms(self, surface, camera_x: int = 0):
         """Draw all platforms relative to camera, only if visible."""
