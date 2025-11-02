@@ -16,10 +16,10 @@ BLUE = (60, 120, 220)
 SKY_BLUE = (150, 210, 245)
 
 # Physics and player movement
-GRAVITY = 1
+GRAVITY = 0.8
 MAX_FALL_SPEED = 16
 PLAYER_SPEED = 6
-PLAYER_JUMP_POWER = 20
+PLAYER_JUMP_POWER = -16
 PLAYER_ATTACK_DAMAGE = 1
 PLAYER_HEALTH = 10
 # Player size
@@ -34,4 +34,5 @@ ENEMY_ATTACK_DAMAGE = 0.5
 ENEMY_HEALTH = 5
 # Level defaults
 GROUND_HEIGHT = 80  # ground thickness in pixels
-WORLD_WIDTH = 3000  # pixels wide, you can increase later
+WORLD_WIDTH = 2000  # pixels wide, you can increase later
+TOTAL_LEVELS = 3  # change if you have more

@@ -1,7 +1,6 @@
 import os
 import pygame
 from settings import *
-from enemy import Enemy
 
 
 class Level:
@@ -10,38 +9,33 @@ class Level:
         from game_platform import Platform
         self.number = level_number
         self.ground_y = SCREEN_HEIGHT - GROUND_HEIGHT
-        self.enemies = pygame.sprite.Group()
 
         # Platforms
         self.platforms = pygame.sprite.Group()
         self.layouts = {
             1: [
-                (600, self.ground_y - 170, 800, 40),
-                (950, self.ground_y - 130, 100, 150)
+                (200, 600, 200, 20),
+                (500, 450, 200, 20),
+                (800, 300, 150, 20),
+                (1200, 550, 220, 20),
             ],
             2: [
-                (600, self.ground_y - 170, 450, 40),
-                (950, self.ground_y - 130, 100, 150),
-                (1250, self.ground_y - 280, 300, 40),
-                (1500, self.ground_y - 240, 50, 260),
-                (1550, self.ground_y - 150, 80, 40)
+                (100, 500, 200, 20),
+                (400, 400, 200, 20),
+                (900, 300, 250, 20),
+                (1500, 500, 180, 20),
+                (1900, 350, 150, 20),
             ],
             3: [
-                ()
+                (150, 550, 200, 20),
+                (600, 450, 220, 20),
+                (1000, 350, 200, 20),
+                (1700, 600, 150, 20),
             ],
         }
-        
-        self.enemy={
-            1 :[
-                (750, self.ground_y - ENEMY_HEIGHT - 100, ENEMY_HEALTH, ENEMY_ATTACK_DAMAGE, ENEMY_SPEED, 3),
-                (700, self.ground_y - ENEMY_HEIGHT - 350, ENEMY_HEALTH, ENEMY_ATTACK_DAMAGE, ENEMY_SPEED, 3),
-                (950, self.ground_y - ENEMY_HEIGHT - 100, ENEMY_HEALTH, ENEMY_ATTACK_DAMAGE, ENEMY_SPEED, 3)
-            ]
-        }
-        
         for p in self.layouts.get(self.number, []):
             self.platforms.add(Platform(*p))
-        
+
         self.layers = []
         self._load_background_layers()
 
@@ -102,8 +96,8 @@ class Level:
         """Draw all platforms relative to camera, only if visible."""
         for p in self.platforms:
             screen_x = p.rect.x - camera_x
-            # if -200 < screen_x < SCREEN_WIDTH + 200:  # simple cull
-            surface.blit(p.image, (screen_x, p.rect.y))
+            if -200 < screen_x < SCREEN_WIDTH + 200:  # simple cull
+                surface.blit(p.image, (screen_x, p.rect.y))
 
 
     def draw(self, surface, camera_x: int = 0):
@@ -111,15 +105,3 @@ class Level:
         self.draw_background(surface, camera_x)
         self.draw_ground(surface, camera_x)
         self.draw_platforms(surface, camera_x)
-
-    def spawn_enemy(self, player):
-        for e in self.enemy.get(self.number, []):
-            self.enemies.add(Enemy(*e, player))
-        for enemy in self.enemies:
-            for p in self.platforms:
-                if (
-                    p.rect.left <= enemy.rect.centerx <= p.rect.right
-                    and enemy.rect.bottom >= p.rect.top - 50  # within 50px vertical range
-                ):
-                    enemy.rect.bottom = p.rect.top
-                    break

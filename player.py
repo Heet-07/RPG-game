@@ -30,17 +30,13 @@ class Player(pygame.sprite.Sprite):
         self.speed=speed
         self.side_left=False
         self.scales=scale
-        self.now = pygame.time.get_ticks()
         
         # ADDED: Health tracking variables
         self.max_health=health
         self.health=health
         self.attack_damage=attack_damage
         self.attacking = False
-        self.last_attack = 0
-        self.hitted = False
-        self.jumping = False
-        self.jump_speed = PLAYER_JUMP_POWER
+        
         # ADDED: Attack hitbox variables
         self.attack_rect = None
         self.last_damage_time = 0
@@ -67,16 +63,6 @@ class Player(pygame.sprite.Sprite):
             frames.append(pygame.transform.scale(frame, (scale*100, scale*100)))
         return frames
     
-    def jump(self):
-        if self.rect.y > SCREEN_HEIGHT - GROUND_HEIGHT - PLAYER_HEIGHT - 100 and self.jumping:
-            self.rect.y = SCREEN_HEIGHT - GROUND_HEIGHT - PLAYER_HEIGHT - 100
-            self.jump_speed = PLAYER_JUMP_POWER
-            self.jumping = False
-        elif self.jumping:
-            self.rect.y -= self.jump_speed
-            if self.jump_speed >= -10* GRAVITY:
-                self.jump_speed -= GRAVITY
-
     # set the new state of player 
     def set_state(self,new_state):
         if new_state != self.state and new_state in self.animations:
@@ -84,34 +70,31 @@ class Player(pygame.sprite.Sprite):
             self.frames = self.load_frame(self.animations[self.state], self.scales)
             self.current_frame = 0
             self.last_update = pygame.time.get_ticks()
-            if self.state == "death":
-                self.alive = False
-            if self.state == "hit":
-                self.hitted = True
     
 
     def get_attack_rect(self):
-        # if self.attacking:
-            # attack_rect = pygame.Rect(self.rect.x, self.rect.y, 100, 28)
+        if self.attacking:
+            attack_rect = pygame.Rect(self.rect.x, self.rect.y, 100, 28)
             # attack_rect.width = 2
             # if self.side_left:
             #     attack_rect.right = self.rect.left 
             # else:
             #     attack_rect.left = self.rect.right
                 
-            # return attack_rect
-        # return None    
-        pass
+            return attack_rect
+        return None    
 
 
     # ADDED: Take damage from enemy
     def take_damage(self, damage):
-        if self.alive:
-            self.set_state("hit")
+        now = pygame.time.get_ticks()
+        if now - self.last_damage_time > self.damage_cooldown:
             self.health -= damage
+            self.last_damage_time = now
             if self.health <= 0:
                 self.health = 0
-                self.set_state("death")
+                self.alive = False
+                quit()
                 
     
     
@@ -138,31 +121,16 @@ class Player(pygame.sprite.Sprite):
         text = font.render(f"Player HP: {(self.health)}/{(self.max_health)}", True, WHITE)
         # text = font.render("HP", True, WHITE)
         screen.blit(text, (x + 10, y + 2))
-        pygame.draw.rect(screen, SKY_BLUE, (x, y+40, bar_width, bar_height), 2)
-        if self.now - self.last_attack <= 1500:
-            pygame.draw.rect(screen, SKY_BLUE, (x, y+40, bar_width*(self.now - self.last_attack)/1500, bar_height))
-        else:
-            pygame.draw.rect(screen, SKY_BLUE, (x, y+40, bar_width, bar_height))
-    
+            
     # update the player        
     def update(self):
         
-        self.now = pygame.time.get_ticks()
+        self.image = pygame.transform.flip(self.frames[self.current_frame], self.side_left, False)
+        self.mask=pygame.mask.from_surface(self.image, 0)
         
-        if not self.alive and self.current_frame == len(self.frames):
-            return
-        
-        if self.rect.y >= SCREEN_HEIGHT - GROUND_HEIGHT - PLAYER_HEIGHT - 100 and not self.jumping:
-            self.rect.y = SCREEN_HEIGHT - GROUND_HEIGHT - PLAYER_HEIGHT - 100
-        elif not self.jumping:
-            self.rect.y += 10 * GRAVITY        
         # handling the key inputs for player
         keys = pygame.key.get_pressed()
-        if not self.attacking and self.alive and not self.hitted:
-            
-            if keys[pygame.K_SPACE]:
-                self.jumping = True
-                
+        if not self.attacking:
             if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
                 self.rect.x += self.speed
                 self.side_left=False
@@ -171,34 +139,26 @@ class Player(pygame.sprite.Sprite):
                 self.rect.x -= self.speed
                 self.side_left=True
                 self.set_state("walk")
-            elif keys[pygame.K_z] and self.now - self.last_attack > 1500:
+            elif keys[pygame.K_SPACE]:
                 self.set_state("attack")
-                self.last_attack = self.now
                 self.hit.play()
                 self.attacking = True
             else:
                 self.set_state("idle")
                 
-            if self.jumping:
-                self.jump()
 
         
         # setting the player state
-        if self.now - self.last_update >=FPS:
-            self.last_update = self.now
+        now = pygame.time.get_ticks()
+        if now - self.last_update >=FPS:
+            self.last_update = now
             self.current_frame += 1
             if self.current_frame >= len(self.frames):
                 if self.state == "attack":
                     self.attacking = False
                     self.set_state("idle")
-                elif self.state == "hit":
-                    self.set_state("idle")
-                    self.hitted = False
                 elif self.state == "death":
                     self.current_frame = len(self.frames) - 1
+                    self.alive = False
                 else:
                     self.current_frame = 0
-                    
-                    
-        self.image = pygame.transform.flip(self.frames[self.current_frame], self.side_left, False)
-        self.mask=pygame.mask.from_surface(self.image, 0)

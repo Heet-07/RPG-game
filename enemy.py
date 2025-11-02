@@ -21,7 +21,6 @@ class Enemy(pygame.sprite.Sprite):
         self.current_frame = 0
         self.image = self.frames[self.current_frame]
         self.rect = self.image.get_rect(topleft=(x, y))
-        self.mask = pygame.mask.from_surface(self.image)
         self.last_update = pygame.time.get_ticks()
         self.alive = True
         self.health = self.max_health = health
@@ -33,7 +32,6 @@ class Enemy(pygame.sprite.Sprite):
         self.damage_cooldown = 800
         self.last_attack_time = 0
         self.attacking = False
-        self.hitted = False
         self.side_left = True
         self.alpha = 0
 
@@ -70,68 +68,63 @@ class Enemy(pygame.sprite.Sprite):
                 self.last_attack_time = pygame.time.get_ticks()
             if self.state == "death":
                 self.alive = False
-                self.death_sound.play()
-            if self.state == "hit":
-                self.hitted = True
 
 
     def take_damage(self, damage):
         """Reduce health when hit by player"""
-        
         now = pygame.time.get_ticks()
         # if now - self.last_damage_time > self.damage_taken_cooldown:
-        if not self.hitted:
-            self.set_state("hit")
-            self.health -= damage
-            self.last_damage_time = now
-            if self.health <= 0 and self.alive:
-                self.death_sound.play()
-                self.health = 0
-                self.set_state("death")
-        
+        self.set_state("hit")
+        self.health -= damage
+        self.last_damage_time = now
+        if self.health <= 0:
+            self.health = 0
+            self.alive = False
+        if 0 < self.health < 2:
+            self.death_sound.play()
+
+
+    
 
     def draw_health_bar(self, screen, camera_x):
         """Draw small health bar above enemy"""
-        # if not self.alive:
-        #     return
+        if not self.alive:
+            return
         
-        # bar_width = 40
-        # bar_height = 5
+        bar_width = 40
+        bar_height = 5
         
-        # # Position above enemy
-        # x = self.rect.centerx-20
-        # y = self.rect.centery-33
+        # Position above enemy
+        x = self.rect.centerx-20
+        y = self.rect.centery-33
         
-        # # Only draw if on screen
-        # # if -bar_width < x < 1024 + bar_width:
-        #     # Background (dark red)
-        # pygame.draw.rect(screen, (100, 0, 0), (x, y, bar_width, bar_height))
+        # Only draw if on screen
+        # if -bar_width < x < 1024 + bar_width:
+            # Background (dark red)
+        pygame.draw.rect(screen, (100, 0, 0), (x, y, bar_width, bar_height))
             
-        #     # Health (green)
-        # health_ratio = max(0, self.health / self.max_health)
-        # pygame.draw.rect(screen, (0, 200, 0), (x, y, bar_width * health_ratio, bar_height))
+            # Health (green)
+        health_ratio = max(0, self.health / self.max_health)
+        pygame.draw.rect(screen, (0, 200, 0), (x, y, bar_width * health_ratio, bar_height))
             
-        #     # Border
-        # pygame.draw.rect(screen, WHITE, (x, y, bar_width, bar_height), 1)
+            # Border
+        pygame.draw.rect(screen, WHITE, (x, y, bar_width, bar_height), 1)
 
 
-    def update(self,platforms=None):
-        
-        if self.rect.y >= SCREEN_HEIGHT - GROUND_HEIGHT - ENEMY_HEIGHT - 100:
-            self.rect.y = SCREEN_HEIGHT - GROUND_HEIGHT - ENEMY_HEIGHT - 100
-        else:
-            self.rect.y += 10 * GRAVITY     
+    def update(self):
         
         now = pygame.time.get_ticks()
         
         # Death check
 # --- DEATH CHECK ---
         if not self.alive:
-    
-            
-            if self.current_frame >= len(self.frames):
+            if self.state != "death":
+                self.death_sound.play()
+                self.set_state("death")
+                
+            elif self.current_frame >= len(self.frames):
                     if self.alpha < 100:
-                        self.image.set_alpha(100 - 2*self.alpha)
+                        self.image.set_alpha(100 - self.alpha*10)
                         self.alpha += 1
                     else:
                         self.kill()
@@ -152,7 +145,7 @@ class Enemy(pygame.sprite.Sprite):
 
         
         # --- ATTACK LOGIC ---
-        if not self.attacking and not self.hitted and self.target.alive:
+        if not self.attacking:
             if distance < self.attack_range:
                 self.set_state("idle")
                 now = pygame.time.get_ticks() 
@@ -165,14 +158,14 @@ class Enemy(pygame.sprite.Sprite):
                 self.set_state("walk")
                 if distance!=0:
                     self.rect.x += int(self.speed * dx / distance)
+                    self.rect.y += int(self.speed * dy / distance)  
             else:
                 self.set_state("idle")
-        elif self.attacking: 
+        else: 
             if self.current_frame == len(self.frames)/2 and distance < self.attack_range:
                 self.target.take_damage(self.attack_damage)
 
         self.image = pygame.transform.flip(self.frames[self.current_frame], self.side_left, False)
-        self.mask = pygame.mask.from_surface(self.image)
         
         # --- ANIMATION UPDATE FIRST ---
         if now - self.last_update >= FPS:
@@ -182,8 +175,5 @@ class Enemy(pygame.sprite.Sprite):
                 if self.state == "attack":
                     self.set_state("idle")
                     self.attacking = False
-                elif self.state == "hit":
-                    self.set_state("idle")
-                    self.hitted = False
                 else:
                     self.current_frame = 0
