@@ -37,10 +37,8 @@ class Game:
         self.level_number = 1
         self.level = None
         self.player = None
-        self.enemy = None
         self.camera_x = 0
 
-        self.lastDamage = 0
         self.damageCooldown = 500  
 
         # --- now it's safe to load level ---
@@ -52,20 +50,8 @@ class Game:
         self.level = Level(level_number=n)
 
         # Create player (preserve health logic if needed)
-        if self.player is None:
-            self.player = Player(64, self.level.ground_y - PLAYER_HEIGHT - 100,
-                                PLAYER_HEALTH, PLAYER_ATTACK_DAMAGE, PLAYER_SPEED, 3)
-        else:
-            # Reset player position and health
-            self.player.x = 64
-            self.player.y = self.level.ground_y - PLAYER_HEIGHT
-            self.player.health = PLAYER_HEALTH
-
-        # --- Always create a new enemy ---
-        self.enemy = Enemy(800, self.level.ground_y - ENEMY_HEIGHT - 100,
-                        ENEMY_HEALTH, ENEMY_ATTACK_DAMAGE, ENEMY_SPEED, 3, self.player)
-
-        self.camera_x = 0
+        self.player = Player(64, self.level.ground_y - PLAYER_HEIGHT - 100, PLAYER_HEALTH, PLAYER_ATTACK_DAMAGE, PLAYER_SPEED, 3)
+        self.level.spawn_enemy(self.player)
 
 
     def update_camera(self):
@@ -92,15 +78,15 @@ class Game:
                     elif event.key == pygame.K_4:
                         self.state = "level_select"
 
-                elif self.state == "playing":
-                    if event.key == pygame.K_1:
-                        self.load_level(1)
-                    elif event.key == pygame.K_2:
-                        self.load_level(2)
-                    elif event.key == pygame.K_3:
-                        self.load_level(3)
-                    elif event.key == pygame.K_4:
-                        self.state = "level_select"
+                # elif self.state == "playing":
+                #     if event.key == pygame.K_1:
+                #         self.load_level(1)
+                #     elif event.key == pygame.K_2:
+                #         self.load_level(2)
+                #     elif event.key == pygame.K_3:
+                #         self.load_level(3)
+                #     elif event.key == pygame.K_4:
+                #         self.state = "level_select"
                 elif self.state == "level_complete":
                     if event.key == pygame.K_n:
                         # Go to next level or loop back to 1
@@ -171,14 +157,13 @@ class Game:
 
         self.level.enemies.update()
         self.player.update()
-        self.enemy.update()
         self.update_camera()
 
         # --- LEVEL TRANSITION CHECK ---
         # When all enemies are dead AND player reaches end of level width
         end_x = WORLD_WIDTH - 100  # near the right edge (you can tweak)
 
-        if not self.enemy.alive and self.player.rect.right >= end_x and self.state == "playing":
+        if not self.level.enemies and self.player.rect.centerx >= end_x and self.state == "playing":
             # Mark level as completed
             self.level_completed[self.level_number] = True
             self.state = "level_complete"
@@ -196,12 +181,11 @@ class Game:
     
         else:
             self.level.draw(self.screen, self.camera_x)
-            self.screen.blit(self.player.image, self.player.rect)
-            self.screen.blit(self.enemy.image, self.enemy.rect)
+            self.screen.blit(self.player.image, (self.player.rect.x - self.camera_x, self.player.rect.y))
+            for enemy in self.level.enemies:
+                self.screen.blit(enemy.image, (enemy.rect.x - self.camera_x, enemy.rect.y))
 
             self.player.draw_health_bar(self.screen)
-            if self.enemy.alive:
-                self.enemy.draw_health_bar(self.screen, self.camera_x)
 
             draw_text(self.screen, "A/D or Arrows to move, Space to attack, Esc to quit",
                     self.font, WHITE, 16, 16)
@@ -242,7 +226,7 @@ class Game:
             prect = prompt_surf.get_rect(center=(pw//2, ph//2 + 8))
             surf.blit(prompt_surf, prect)
         # Hint
-        hint = small_font.render("Esc to Quit • 1/2 choose level in-game", True, (210, 210, 210))
+        hint = small_font.render("Esc to Quit • Press 4 to choose level in-game", True, (210, 210, 210))
         hrect = hint.get_rect(center=(pw//2, ph - 14))
         surf.blit(hint, hrect)
 
@@ -294,14 +278,12 @@ class Game:
 
 
     def player_attack(self):
-        if self.player.attacking:
-            attack_block = self.player.get_attack_rect()
+       if self.player.attacking:
+            # attack_block = self.player.get_attack_rect()
             now = pygame.time.get_ticks()
-            if (attack_block is not None) and ((now-self.lastDamage) > self.damageCooldown):
-                if attack_block.colliderect(self.enemy.rect) :
-                    self.lastDamage = now
-                    self.enemy.take_damage(PLAYER_ATTACK_DAMAGE)
-
+            for e in self.level.enemies:
+                if not e.hitted and abs(self.player.rect.centerx - e.rect.centerx) < 75 and abs(self.player.rect.centery - e.rect.centery) < 25 and self.player.side_left != e.side_left:
+                    e.take_damage(PLAYER_ATTACK_DAMAGE)
     def run(self):
         # print("🟢 Entering run loop")
         while True:
