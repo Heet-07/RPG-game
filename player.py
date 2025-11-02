@@ -90,7 +90,7 @@ class Player(pygame.sprite.Sprite):
                 self.hitted = True
     
 
-    def get_attack_rect(self):
+    '''def get_attack_rect(self):
         # if self.attacking:
             # attack_rect = pygame.Rect(self.rect.x, self.rect.y, 100, 28)
             # attack_rect.width = 2
@@ -101,7 +101,7 @@ class Player(pygame.sprite.Sprite):
                 
             # return attack_rect
         # return None    
-        pass
+        pass'''
 
 
     # ADDED: Take damage from enemy
@@ -139,8 +139,8 @@ class Player(pygame.sprite.Sprite):
         # text = font.render("HP", True, WHITE)
         screen.blit(text, (x + 10, y + 2))
         pygame.draw.rect(screen, SKY_BLUE, (x, y+40, bar_width, bar_height), 2)
-        if self.now - self.last_attack <= 1500:
-            pygame.draw.rect(screen, SKY_BLUE, (x, y+40, bar_width*(self.now - self.last_attack)/1500, bar_height))
+        if self.now - self.last_attack <= 1300:
+            pygame.draw.rect(screen, SKY_BLUE, (x, y+40, bar_width*(self.now - self.last_attack)/1300, bar_height))
         else:
             pygame.draw.rect(screen, SKY_BLUE, (x, y+40, bar_width, bar_height))
     
@@ -171,7 +171,7 @@ class Player(pygame.sprite.Sprite):
                 self.rect.x -= self.speed
                 self.side_left=True
                 self.set_state("walk")
-            elif keys[pygame.K_z] and self.now - self.last_attack > 1500:
+            elif keys[pygame.K_z] and self.now - self.last_attack > 1300:
                 self.set_state("attack")
                 self.last_attack = self.now
                 self.hit.play()

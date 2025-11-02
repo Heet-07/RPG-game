@@ -248,12 +248,12 @@ class Game:
 
             self.player.draw_health_bar(self.screen)
 
-            draw_text(self.screen, "A/D or Arrows to move, Space to attack, Esc to quit",
-                    self.font, WHITE, 16, 16)
+            draw_text(self.screen, "A/D or Arrows to move • Z to attack • Space to Jump • Esc to quit • P to pause • L to select level",
+                    self.font, BLACK, 17, 17)
 
         pygame.display.flip()
 
-    def draw_menu(self):
+    """def draw_menu(self):
         # Low-res render target for crisp pixel look
         pw, ph = self.pixel_size
         surf = pygame.Surface((pw, ph))
@@ -271,7 +271,7 @@ class Game:
         pygame.draw.rect(surf, (15, 25, 45), (0, ph-28, pw, 28))
 
         # Title and prompt (pixel fonts)
-        title = "Dungeon Platformer"
+        title = "GOBLIN SLAYER!!!!"
         prompt = "Press ENTER to Start"
         # Simple blinking
         show_prompt = (self.menu_tick // 30) % 2 == 0
@@ -286,14 +286,76 @@ class Game:
             prompt_surf = small_font.render(prompt, True, (255, 230, 120))
             prect = prompt_surf.get_rect(center=(pw//2, ph//2 + 8))
             surf.blit(prompt_surf, prect)
+
         # Hint
-        hint = small_font.render("Esc to Quit • Press 4 to choose level in-game", True, (210, 210, 210))
+        hint = small_font.render("Esc to Quit • L to pause the Game", True, (210, 210, 210))
         hrect = hint.get_rect(center=(pw//2, ph - 14))
         surf.blit(hint, hrect)
 
         # Scale up to screen size with nearest-neighbor
         scaled = pygame.transform.scale(surf, (SCREEN_WIDTH, SCREEN_HEIGHT))
+        self.screen.blit(scaled, (0, 0)) """
+    
+
+    def draw_menu(self):
+        # Low-res render target for crisp pixel look
+        pw, ph = self.pixel_size
+        surf = pygame.Surface((pw, ph))
+
+        # Background gradient sky
+        surf.fill((40, 40, 75))
+        for i in range(ph // 2):
+            c = 75 + i // 2
+            pygame.draw.line(surf, (c, 160, 220), (0, i), (pw, i))
+
+        # Starfield
+        for x, y in self.menu_stars:
+            surf.set_at((x, y), (255, 255, 255))
+
+        # Silhouette hills
+        pygame.draw.rect(surf, (20, 35, 60), (0, ph - 40, pw, 40))
+        pygame.draw.rect(surf, (15, 25, 45), (0, ph - 28, pw, 28))
+
+        # Title and prompt (pixel fonts)
+        title = "GOBLIN SLAYER!!!"
+        prompt = "Press ENTER to Start"
+        show_prompt = (self.menu_tick // 30) % 2 == 0
+        title_font = self.pixel_font_large
+        small_font = self.pixel_font_small
+
+        # --- Title ---
+        title_surf = title_font.render(title, True, RED)
+        trect = title_surf.get_rect(center=(pw // 2, ph // 2 - 25))
+        surf.blit(title_surf, trect)
+
+        # --- Blinking prompt ---
+        if show_prompt:
+            prompt_surf = small_font.render(prompt, True, (255, 230, 120))
+            prect = prompt_surf.get_rect(center=(pw // 2, ph // 2 + 8))
+            surf.blit(prompt_surf, prect)
+
+        # --- Smooth Scrolling Credits (never cuts off) ---
+        credits_text = "Made by :-  Heet Makvana   •   Shrey Marakana   •   Tirth Sutariya   •   "
+        scroll_speed = 0.5 # adjust for speed
+        text_surface = small_font.render(credits_text, True, (220, 220, 220))
+        text_width = text_surface.get_width()
+
+        # scrolling x position
+        scroll_x = pw - (self.menu_tick * scroll_speed) % (text_width + pw)
+
+        # draw twice: one on screen, one following after it
+        surf.blit(text_surface, (scroll_x, ph - 35))
+        surf.blit(text_surface, (scroll_x - text_width - 20, ph - 35))  # spacing 20 pixels for smoothness
+
+        # --- Hint text ---
+        hint = small_font.render("Esc to Quit", True, (210, 210, 210))
+        hrect = hint.get_rect(center=(pw // 2, ph - 14))
+        surf.blit(hint, hrect)
+
+        # --- Scale up to full screen ---
+        scaled = pygame.transform.scale(surf, (SCREEN_WIDTH, SCREEN_HEIGHT))
         self.screen.blit(scaled, (0, 0))
+
 
         
     def draw_player_dead(self):
@@ -341,6 +403,7 @@ class Game:
                     SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 50, center=True)
             draw_text(self.screen, "Press M to return to Main Menu", self.font, WHITE,
                     SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 90, center=True)
+            
             return  # stop here so the normal message below doesn’t draw
 
         # --- Normal level complete message for Levels 1 & 2 ---
