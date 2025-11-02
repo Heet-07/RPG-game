@@ -7,7 +7,11 @@ from level import Level
 from player import Player
 from enemy import Enemy
 
+#The Main Game class running the logics
+
 class Game:
+
+    #defined all the parameters for this file
 
     def __init__(self):
         pygame.init()
@@ -18,9 +22,8 @@ class Game:
         self.clock = pygame.time.Clock()
         self.font = pygame.font.Font(None, 28)
 
-        # Menu state and pixel look
-        self.state = "menu"  # menu | playing | level_complete | game_complete | level_select
-        self.level_completed = {}  # e.g. {1: True, 2: False, 3: False}
+        self.state = "menu"
+        self.level_completed = {}
         for i in range(1, TOTAL_LEVELS + 1):
             self.level_completed[i] = False
 
@@ -33,7 +36,6 @@ class Game:
             for _ in range(60)
         ]
 
-        # --- define world/level state BEFORE load_level() ---
         self.level_number = 1
         self.level = None
         self.player = None
@@ -41,9 +43,10 @@ class Game:
 
         self.damageCooldown = 500  
 
-        # --- now it's safe to load level ---
         self.load_level(self.level_number)
 
+
+    #function to load levels from the level.py file
 
     def load_level(self, n: int):
         self.level_number = n
@@ -53,6 +56,7 @@ class Game:
         self.player = Player(64, self.level.ground_y - PLAYER_HEIGHT - 100, PLAYER_HEALTH, PLAYER_ATTACK_DAMAGE, PLAYER_SPEED, 3)
         self.level.spawn_enemy(self.player)
 
+    #camera movement logic
 
     def update_camera(self):
         """Follow player horizontally with smooth offset."""
@@ -60,6 +64,8 @@ class Game:
         target = player_center_x - SCREEN_WIDTH // 2
         self.camera_x = max(0, min(target, WORLD_WIDTH - SCREEN_WIDTH))
 
+
+    #fucntion handling the happenings of the game, which state is on or off, in those what will be called
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -72,21 +78,27 @@ class Game:
                     sys.exit()
                 if self.state == "menu":
                     if event.key == pygame.K_RETURN:
+
                         # Start game
+
                         self.state = "playing"
                         self.load_level(self.level_number)
                     elif event.key == pygame.K_4:
                         self.state = "level_select"
                 
+
+
                 elif self.state == "playing":
                     if event.key == pygame.K_p:
                         self.state = "paused"
                     elif event.key == pygame.K_l:
                         self.state = "level_select"
 
+                #level complete menu logic handler
+
                 elif self.state == "level_complete":
                     if event.key == pygame.K_n:
-                        # Go to next level or loop back to 1
+
                         next_level = self.level_number + 1 if self.level_number < TOTAL_LEVELS else 1
                         self.load_level(next_level)
                         self.state = "playing"
@@ -95,13 +107,14 @@ class Game:
                     elif event.key == pygame.K_m:
                         self.state = "menu"
 
+                #level selector
+
                 elif self.state == "level_select":
                     if event.key == pygame.K_m:
                         self.state = "menu"
                     elif event.key in (pygame.K_1, pygame.K_2, pygame.K_3):
                         level_choice = int(event.unicode)
 
-                        # --- Determine if playable ---
                         if (
                             level_choice == 1 or
                             self.level_completed.get(level_choice - 1, False) or
@@ -111,10 +124,12 @@ class Game:
                             self.state = "playing"
 
                         # Can only play a level if it is unlocked (previous completed) or already completed
+
                         if level_choice == 1 or self.level_completed.get(level_choice - 1, False) or self.level_completed[level_choice]:
                             self.load_level(level_choice)
                             self.state = "playing"
 
+                #pause menu update handler
 
                 elif self.state == "paused":
                     if event.key == pygame.K_p:
@@ -127,6 +142,8 @@ class Game:
                         # Go to level select
                         self.state = "level_select"
 
+                #player death menu updates handler
+
                 elif self.state == "player_dead":
                     if event.key == pygame.K_r:
                         # Retry same level
@@ -137,15 +154,16 @@ class Game:
                     elif event.key == pygame.K_m:
                         self.state = "menu"
 
+    #function to update at the instance any entity and logic
 
     def update(self):
         if self.state == "paused":
             return
 
         if self.state == "menu":
-            # Animate menu stars
+
             self.menu_tick += 1
-            # Move stars slowly left; wrap around
+
             new_stars = []
             for x, y in self.menu_stars:
                 speed = 1 if y % 3 else 2
@@ -158,6 +176,8 @@ class Game:
             return
 
         hit_platform = pygame.sprite.spritecollide(self.player, self.level.platforms, False, pygame.sprite.collide_mask)
+
+        #collison logic for player and floating platforms
 
         if hit_platform:
             for p in hit_platform:
@@ -174,6 +194,8 @@ class Game:
                     else:
                         self.player.rect.x -= self.player.speed
 
+        #collision logic for enemy and floating platforms
+
         for enemy in self.level.enemies:
             enemy_hit_platforms = pygame.sprite.spritecollide(enemy, self.level.platforms, False, pygame.sprite.collide_mask)
             for p in enemy_hit_platforms:
@@ -188,22 +210,27 @@ class Game:
 
         self.level.enemies.update()
         self.player.update()
-        # --- Player death check ---
+
+        #player death logic
+
         if self.player.health <= 0 and self.state == "playing":
             self.state = "player_dead"
             return
 
         self.update_camera()
 
-        # --- LEVEL TRANSITION CHECK ---
-        # When all enemies are dead AND player reaches end of level width
-        end_x = WORLD_WIDTH - 100  # near the right edge (you can tweak)
+        # When all enemies are dead AND player reaches end of level width, next level can be unlocked
+
+        end_x = WORLD_WIDTH - 100
 
         if not self.level.enemies and self.player.rect.centerx >= end_x and self.state == "playing":
+
             # Mark current level as completed
+
             self.level_completed[self.level_number] = True
 
             # Automatically unlock next level if it exists
+
             next_level = self.level_number + 1
             if next_level <= TOTAL_LEVELS:
                 self.level_completed[next_level] = self.level_completed.get(next_level, False)
@@ -211,7 +238,8 @@ class Game:
             self.state = "level_complete"
 
 
-        
+    #actual function responsible for calling all other draw functions
+
     def draw(self):
         
         if self.state == "menu":
@@ -238,13 +266,13 @@ class Game:
             self.player.draw_health_bar(self.screen)
 
             draw_text(self.screen, "A/D or Arrows to move • Z to attack • Space to Jump • Esc to quit • P to pause • L to select level",
-                    self.font, BLACK, 17, 17)
+                    self.font, WHITE, 17, 17)
 
         pygame.display.flip()
 
 
     def draw_menu(self):
-        # Low-res render target for crisp pixel look
+
         pw, ph = self.pixel_size
         surf = pygame.Surface((pw, ph))
 
@@ -262,65 +290,65 @@ class Game:
         pygame.draw.rect(surf, (20, 35, 60), (0, ph - 40, pw, 40))
         pygame.draw.rect(surf, (15, 25, 45), (0, ph - 28, pw, 28))
 
-        # Title and prompt (pixel fonts)
         title = "GOBLIN SLAYER!!!"
         prompt = "Press ENTER to Start"
         show_prompt = (self.menu_tick // 30) % 2 == 0
         title_font = self.pixel_font_large
         small_font = self.pixel_font_small
 
-        # --- Title ---
+        #Title
+
         title_surf = title_font.render(title, True, RED)
         trect = title_surf.get_rect(center=(pw // 2, ph // 2 - 25))
         surf.blit(title_surf, trect)
 
-        # --- Blinking prompt ---
+
         if show_prompt:
             prompt_surf = small_font.render(prompt, True, (255, 230, 120))
             prect = prompt_surf.get_rect(center=(pw // 2, ph // 2 + 8))
             surf.blit(prompt_surf, prect)
 
-        # --- Smooth Scrolling Credits (never cuts off) ---
+        #CREDITS to the makers
+
         credits_text = "Made by :-  Heet Makvana   •   Shrey Marakana   •   Tirth Sutariya   •   "
         scroll_speed = 0.5 # adjust for speed
         text_surface = small_font.render(credits_text, True, (220, 220, 220))
         text_width = text_surface.get_width()
 
-        # scrolling x position
+
         scroll_x = pw - (self.menu_tick * scroll_speed) % (text_width + pw)
 
-        # draw twice: one on screen, one following after it
+
         surf.blit(text_surface, (scroll_x, ph - 35))
         surf.blit(text_surface, (scroll_x - text_width - 20, ph - 35))  # spacing 20 pixels for smoothness
 
-        # --- Hint text ---
+
         hint = small_font.render("Esc to Quit", True, (210, 210, 210))
         hrect = hint.get_rect(center=(pw // 2, ph - 14))
         surf.blit(hint, hrect)
 
-        # --- Scale up to full screen ---
+
         scaled = pygame.transform.scale(surf, (SCREEN_WIDTH, SCREEN_HEIGHT))
         self.screen.blit(scaled, (0, 0))
 
-        
+    #function to draw the menu for when the player dies
+
     def draw_player_dead(self):
-        # --- Draw the world and the player's dead body ---
+       
         self.level.draw(self.screen, self.camera_x)
 
-        # Draw the player's body (as-is, not respawned)
         self.screen.blit(self.player.image, (self.player.rect.x - self.camera_x, self.player.rect.y))
 
-        # Optionally draw enemies still visible (adds realism)
         for enemy in self.level.enemies:
             self.screen.blit(enemy.image, (enemy.rect.x - self.camera_x, enemy.rect.y))
 
-        # --- Apply a single translucent red overlay (static, no flashing) ---
         overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
-        overlay.set_alpha(160)  # adjust transparency (150–180 looks good)
-        overlay.fill((40, 0, 0))  # dark red tone
+        overlay.set_alpha(160) 
+        overlay.fill((40, 0, 0)) 
         self.screen.blit(overlay, (0, 0))
 
-        # --- Display the "You Died" text and options ---
+        #dispaly items for death of player
+         
         draw_text(self.screen, "💀 You Died 💀", self.font, RED,
                 SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 100, center=True)
         draw_text(self.screen, "Press R to Retry Level", self.font, WHITE,
@@ -334,7 +362,8 @@ class Game:
     def draw_level_complete(self):
         self.screen.fill((30, 30, 60))
 
-        # --- Special ending message for Level 3 ---
+        #Special ending message for Level 3,  as game is complete after defeating the boss at level 3 and gliding across
+
         if self.level_number == 3:
             draw_text(self.screen, "🎉 Congratulations! 🎉", self.font, GREEN,
                     SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 80, center=True)
@@ -347,9 +376,10 @@ class Game:
             draw_text(self.screen, "Press M to return to Main Menu", self.font, WHITE,
                     SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 90, center=True)
             
-            return  # stop here so the normal message below doesn’t draw
+            return
 
-        # --- Normal level complete message for Levels 1 & 2 ---
+        # Normal level complete message for Levels 1 & 2 
+
         draw_text(self.screen, f"Level {self.level_number} Complete!", self.font, GREEN,
                 SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 60, center=True)
 
@@ -368,6 +398,8 @@ class Game:
                 SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 90, center=True)
 
         
+    #fucntion to draw pause menu, by key P
+
     def draw_pause_menu(self):
         overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
         overlay.set_alpha(180)
@@ -385,13 +417,20 @@ class Game:
 
 
 
-        
+    #function to draw the Menu of level-selection
+
     def draw_level_select(self):
         self.screen.fill((25, 25, 45))
         draw_text(self.screen, "Select Level", self.font, WHITE,
                 SCREEN_WIDTH // 2, 100, center=True)
 
         y_offset = 200
+
+        #level 1 is automatically unlocked in every instance of the Game
+        
+        #When level is completed, the next one is automatically unlocked
+
+
         for i in range(1, TOTAL_LEVELS + 1):
             if i == 1:
                 status = "Unlocked" if not self.level_completed[i] else "Completed"
@@ -414,6 +453,7 @@ class Game:
 
 
 
+    #Function for the attack of the player
 
     def player_attack(self):
        if self.player.attacking:
@@ -421,6 +461,10 @@ class Game:
             for e in self.level.enemies:
                 if not e.hitted and abs(self.player.rect.centerx - e.rect.centerx) < 75 and abs(self.player.rect.centery - e.rect.centery) < 25 and self.player.side_left != e.side_left:
                     e.take_damage(PLAYER_ATTACK_DAMAGE)
+
+
+    #The Run function to start the Game, it starts the events,updates,etc
+                    
     def run(self):
         while True:
             self.handle_events()
@@ -428,6 +472,8 @@ class Game:
             self.update()
             self.player_attack()
             self.clock.tick(FPS)
+
+#Run the GAMEEE
 
 if __name__ == "__main__":
     Game().run()

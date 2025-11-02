@@ -86,7 +86,7 @@ class Level:
             (f"level{self.number}rear.png", 0.3),  # rear = far = slower
             (f"level{self.number}mid.png", 0.6),   # mid = closer = faster
         ]
-
+        
         for name, speed in layer_files:
             path = os.path.join(bg_dir, name)
             if os.path.isfile(path):
