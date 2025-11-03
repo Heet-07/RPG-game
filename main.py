@@ -23,6 +23,7 @@ class Game:
         self.font = pygame.font.Font(None, 28)
 
         self.state = "menu"
+
         self.level_completed = {}
         for i in range(1, TOTAL_LEVELS + 1):
             self.level_completed[i] = False
@@ -41,10 +42,9 @@ class Game:
         self.player = None
         self.camera_x = 0
   
+        self.background_music = None
 
         self.load_level(self.level_number)
-        self.background_music = pygame.mixer.Sound("Audio/background.mp3")
-        self.background_music.set_volume(0.1)
 
 
     #function to load levels from the level.py file
@@ -56,6 +56,18 @@ class Game:
         # Create player (preserve health logic if needed)
         self.player = Player(64, self.level.ground_y - PLAYER_HEIGHT - 100, PLAYER_HEALTH, PLAYER_ATTACK_DAMAGE, PLAYER_SPEED, 3)
         self.level.spawn_enemy(self.player)
+
+        if self.background_music:
+            self.background_music.stop()  # stop previous music if any
+
+        if self.level_number in (1, 2):
+            music_path = "Audio/backg2.mp3"
+        else:  # level 3 is boss level
+            music_path = "Audio/background.mp3"
+
+        self.background_music = pygame.mixer.Sound(music_path)
+        self.background_music.set_volume(0.1)
+        self.background_music.play(loops=-1)
 
     #camera movement logic
 
@@ -81,22 +93,43 @@ class Game:
                     sys.exit()
                 if self.state == "menu":
                     if event.key == pygame.K_RETURN:
-
-                        # Start game
-
                         self.state = "playing"
                         self.load_level(self.level_number)
                     elif event.key == pygame.K_4:
                         self.state = "level_select"
-                
+                    
 
 
                 elif self.state == "playing":
-                    self.background_music.play()
+
                     if event.key == pygame.K_p:
                         self.state = "paused"
                     elif event.key == pygame.K_l:
                         self.state = "level_select"
+                    elif event.key == pygame.K_o:  # open Options
+                        self.state = "options"
+
+                elif self.state == "options":
+                    if event.key == pygame.K_1:
+                        self.state = "settings"
+                    elif event.key == pygame.K_2:
+                        self.state = "controls"
+                    elif event.key == pygame.K_m:
+                        self.state = "playing"
+
+                elif self.state == "settings":
+                    if event.key == pygame.K_m:
+                        self.state = "options"
+                    elif event.key == pygame.K_PLUS or event.key == pygame.K_EQUALS:
+                        vol = self.background_music.get_volume()
+                        self.background_music.set_volume(min(1.0, vol + 0.1))
+                    elif event.key == pygame.K_MINUS:
+                        vol = self.background_music.get_volume()
+                        self.background_music.set_volume(max(0.0, vol - 0.1))
+
+                elif self.state == "controls":
+                    if event.key == pygame.K_m:
+                        self.state = "options"
 
                 #level complete menu logic handler
 
@@ -161,8 +194,9 @@ class Game:
     #function to update at the instance any entity and logic
 
     def update(self):
-        if self.state == "paused":
+        if self.state in ("paused", "options", "settings", "controls"):
             return
+
 
         if self.state == "menu":
 
@@ -254,7 +288,14 @@ class Game:
         
         elif self.state == "level_select":
             self.draw_level_select()
-        
+
+        elif self.state == "options":
+            self.draw_options()
+        elif self.state == "settings":
+            self.draw_settings()
+        elif self.state == "controls":
+            self.draw_controls()
+
         elif self.state == "paused":
             self.draw_pause_menu()
         
@@ -269,7 +310,7 @@ class Game:
 
             self.player.draw_health_bar(self.screen)
 
-            draw_text(self.screen, "A/D or Arrows to move • Z to attack • Space to Jump • Esc to quit • P to pause • L to select level",
+            draw_text(self.screen, "A/D or Arrows to move • Z to attack • Space to Jump • Esc to quit • P to pause • L to select level • O to Options",
                     self.font, WHITE, 17, 17)
 
         pygame.display.flip()
@@ -361,6 +402,58 @@ class Game:
                 SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 10, center=True)
         draw_text(self.screen, "Press M to return to Main Menu", self.font, WHITE,
                 SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 60, center=True)
+
+
+
+    def draw_options(self):
+        self.screen.fill((25, 25, 50))
+        draw_text(self.screen, "OPTIONS MENU", self.font, WHITE,
+                SCREEN_WIDTH // 2, 100, center=True)
+
+        draw_text(self.screen, "1. Settings", self.font, GREEN,
+                SCREEN_WIDTH // 2, 200, center=True)
+        draw_text(self.screen, "2. Controls", self.font, GREEN,
+                SCREEN_WIDTH // 2, 240, center=True)
+        draw_text(self.screen, "Press M to return to Main Menu", self.font, GRAY,
+                SCREEN_WIDTH // 2, SCREEN_HEIGHT - 100, center=True)
+
+        pygame.display.flip()
+
+
+    def draw_settings(self):
+        self.screen.fill((20, 20, 45))
+        draw_text(self.screen, "SETTINGS", self.font, WHITE,
+                SCREEN_WIDTH // 2, 100, center=True)
+        draw_text(self.screen, f"Music Volume: {self.background_music.get_volume():.1f}",
+                self.font, GREEN, SCREEN_WIDTH // 2, 200, center=True)
+        draw_text(self.screen, "Press [+] or [-] to adjust volume", self.font,
+                WHITE, SCREEN_WIDTH // 2, 250, center=True)
+        draw_text(self.screen, "Press M to return to Options", self.font,
+                GRAY, SCREEN_WIDTH // 2, SCREEN_HEIGHT - 100, center=True)
+        pygame.display.flip()
+
+
+    def draw_controls(self):
+        self.screen.fill((15, 25, 45))
+        draw_text(self.screen, "CONTROLS", self.font, WHITE,
+                SCREEN_WIDTH // 2, 100, center=True)
+        y = 200
+        controls = [
+            "A / D  → Move Left / Right",
+            "SPACE  → Jump",
+            "Z      → Attack",
+            "P      → Pause",
+            "L      → Level Select",
+            "M      → Main Menu",
+            "O      → Options Menu",
+        ]
+        for c in controls:
+            draw_text(self.screen, c, self.font, WHITE, SCREEN_WIDTH // 2, y, center=True)
+            y += 40
+        draw_text(self.screen, "Press M to return to Options", self.font, GRAY,
+                SCREEN_WIDTH // 2, SCREEN_HEIGHT - 100, center=True)
+        pygame.display.flip()
+
 
 
     def draw_level_complete(self):
