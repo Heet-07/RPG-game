@@ -48,7 +48,7 @@ class Player(pygame.sprite.Sprite):
 
 
         # Load sounds
-        self.death_sound = pygame.mixer.Sound("Audio/player_death.MP3")
+        self.death_sound = pygame.mixer.Sound("Audio/death_sound_bleach.MP3")
         self.death_sound.set_volume(1)
         self.hit = pygame.mixer.Sound("Audio/player_hit2.mp3")  
         self.hit.set_volume(1)

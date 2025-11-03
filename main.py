@@ -182,6 +182,7 @@ class Game:
                 #player death menu updates handler
 
                 elif self.state == "player_dead":
+                    self.player.death_sound.stop()
                     if event.key == pygame.K_r:
                         # Retry same level
                         self.load_level(self.level_number)
@@ -194,6 +195,10 @@ class Game:
     #function to update at the instance any entity and logic
 
     def update(self):
+        
+        if not self.player.alive:
+            self.background_music.stop()
+        
         if self.state in ("paused", "options", "settings", "controls"):
             return
 
