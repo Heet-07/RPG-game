@@ -40,10 +40,11 @@ class Game:
         self.level = None
         self.player = None
         self.camera_x = 0
-
-        self.damageCooldown = 500  
+  
 
         self.load_level(self.level_number)
+        self.background_music = pygame.mixer.Sound("Audio/background.mp3")
+        self.background_music.set_volume(0.1)
 
 
     #function to load levels from the level.py file
@@ -59,7 +60,9 @@ class Game:
     #camera movement logic
 
     def update_camera(self):
+        
         """Follow player horizontally with smooth offset."""
+
         player_center_x = self.player.rect.centerx
         target = player_center_x - SCREEN_WIDTH // 2
         self.camera_x = max(0, min(target, WORLD_WIDTH - SCREEN_WIDTH))
@@ -89,6 +92,7 @@ class Game:
 
 
                 elif self.state == "playing":
+                    self.background_music.play()
                     if event.key == pygame.K_p:
                         self.state = "paused"
                     elif event.key == pygame.K_l:

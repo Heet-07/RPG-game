@@ -44,7 +44,7 @@ class Enemy(pygame.sprite.Sprite):
             self.death_sound = pygame.mixer.Sound("Audio/orc_death1.MP3") # set death sound for normal goblin
         else:
             self.death_sound = pygame.mixer.Sound("Audio/orc_boss_death.MP3") # set death sound for boss goblin
-        self.death_sound.set_volume(0.6) # set the volume for death sound
+        self.death_sound.set_volume(1) # set the volume for death sound
 
     # Pre-scale frames when loading to improve performance
     def load_frames(self, sprite_sheet):
@@ -76,7 +76,6 @@ class Enemy(pygame.sprite.Sprite):
 
     # reduce damage when enemy is hitted by the player
     def take_damage(self, damage):
-        now = pygame.time.get_ticks()
         if not self.hitted:
             self.set_state("hit")
             self.health -= damage
@@ -134,8 +133,7 @@ class Enemy(pygame.sprite.Sprite):
                     
             elif distance < self.vision_range: # then enemy approach the player
                 self.set_state("walk")
-                if distance!=0:
-                    self.rect.x += int(self.speed * dx / distance)
+                self.rect.x += int(self.speed * dx / distance)
             else:
                 self.set_state("idle")
         elif self.attacking: 
