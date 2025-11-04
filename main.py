@@ -17,14 +17,14 @@ class Game:
         pygame.init()
         pygame.mixer.init()
 
-        self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-        pygame.display.set_caption(TITLE)
-        self.clock = pygame.time.Clock()
+        self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT)) #screen of the game
+        pygame.display.set_caption(TITLE) 
+        self.clock = pygame.time.Clock() #game time
         self.font = pygame.font.Font(None, 28)
 
-        self.state = "menu"
+        self.state = "menu" #menu variable for all types of menu
 
-        self.level_completed = {}
+        self.level_completed = {} #levels completed
         for i in range(1, TOTAL_LEVELS + 1):
             self.level_completed[i] = False
 
@@ -44,7 +44,7 @@ class Game:
   
         self.background_music = None
 
-        self.load_level(self.level_number)
+        self.load_level(self.level_number) #loads the levels initially
 
 
     #function to load levels from the level.py file
